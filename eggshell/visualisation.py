@@ -250,7 +250,6 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
                 LOGGER.exception('failed to calculate timeseries for %s ' % (key))
 
         frq = get_frequency(resouces[0])
-        print frq
 
         if window is None:
             if frq == 'day':
