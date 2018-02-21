@@ -240,6 +240,25 @@ def local_path(url):
     return url_parts.path
 
 
+def actual_output_path(fn):
+    """Return the path to an output file, adjusting for whether or not the server is active or not.
+
+    Example
+    -------
+    On a local server it would yield something like::
+
+       http://localhost:8090/wpsoutputs/flyingpigeon/af06fb/af06fb.nc
+
+    While in test mode it would yield::
+
+       file:///tmp/af06fb/af06fb.nc
+
+    """
+    outputurl = configuration.get_config_value('server', 'outputurl')
+    outputpath = configuration.get_config_value('server', 'outputpath')
+
+    return os.path.join(outputurl, os.path.relpath(fn, outputpath))
+
 
 def rename_complexinputs(complexinputs):
     """
