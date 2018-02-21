@@ -1,0 +1,27 @@
+name: eggshell
+channels:
+- conda-forge
+- defaults
+dependencies:
+################
+# numeric
+- numpy
+#- scipy
+################
+# visualisation
+- matplotlib
+- cartopy
+- iris
+################
+- libnetcdf
+- ocgis
+################
+
+################
+# docs for development
+- sphinx
+- sphinx_rtd_theme
+- doc8
+
+- pip:
+  - sphinx-autoapi==0.5.0
