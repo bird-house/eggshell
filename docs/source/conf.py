@@ -313,6 +313,7 @@ intersphinx_mapping = {'python': ('http://docs.python.org/', None),
                        'phoenix': ('http://pyramid-phoenix.readthedocs.io/en/latest/', None),
                        'malleefowl': ('http://malleefowl.readthedocs.io/en/latest/', None),
                        'twitcher': ('http://twitcher.readthedocs.io/en/latest/', None),
+                       'eggshell': ('http://eggshell.readthedocs.io/en/latest/', None),
                        'flyingpigeon': ('http://flyingpigeon.readthedocs.io/en/latest/', None),
                        'hummingbird': ('http://birdhouse-hummingbird.readthedocs.io/en/latest/', None),
                        'emu': ('http://emu.readthedocs.io/en/latest/', None),
@@ -331,11 +332,12 @@ rst_epilog = """
 .. _reStructuredText: http://sphinx-doc.org/rest.html
 .. _Read the Docs: https://readthedocs.org
 .. _Anaconda: https://www.continuum.io/
-.. _Buildout: http://www.buildout.org/en/latest/ 
+.. _Buildout: http://www.buildout.org/en/latest/
 .. _Birdhouse: http://birdhouse.readthedocs.io/en/latest/
 .. _Phoenix: http://pyramid-phoenix.readthedocs.io/en/latest/
 .. _Malleefowl: http://malleefowl.readthedocs.io/en/latest/
 .. _Twitcher: http://twitcher.readthedocs.io/en/latest/
+.. _Eggshell: http://eggshell.readthedocs.io/en/latest/
 .. _Flyingpigeon: http://flyingpigeon.readthedocs.io/en/latest/
 .. _Hummingbird: http://birdhouse-hummingbird.readthedocs.io/en/latest/
 .. _Emu: http://emu.readthedocs.io/en/latest/
@@ -346,4 +348,3 @@ rst_epilog = """
 .. _dispel4py: https://github.com/dispel4py/dispel4py
 .. _esgf-pyclient: https://github.com/ESGF/esgf-pyclient
 """
-
