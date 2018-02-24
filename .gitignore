@@ -72,6 +72,8 @@ docs/build/
 *.log
 *.lock
 testdata.json
+.pytest_cache/
+.pytest_cache/*
 
 # IPython
 .ipynb_checkpoints
