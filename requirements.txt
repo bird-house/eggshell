@@ -1,2 +1,4 @@
+threddsclient
+requests
 #ocgis
 #netCDF4

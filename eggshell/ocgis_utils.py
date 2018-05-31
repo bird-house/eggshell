@@ -1,5 +1,28 @@
 import ocgis
 
+temp_groups = {'AMJJAS': [[4, 5, 6, 7, 8, 9], 'unique'],
+     'Apr': [[4], 'unique'],
+     'Aug': [[8], 'unique'],
+     'DJF': [[12, 1, 2], 'unique'],
+     'Dec': [[12], 'unique'],
+     'Feb': [[2], 'unique'],
+     'JJA': [[6, 7, 8], 'unique'],
+     'Jan': [[1], 'unique'],
+     'Jul': [[7], 'unique'],
+     'Jun': [[6], 'unique'],
+     'MAM': [[3, 4, 5], 'unique'],
+     'Mar': [[3], 'unique'],
+     'May': [[5], 'unique'],
+     'Nov': [[11], 'unique'],
+     'ONDJFM': [[10, 11, 12, 1, 2, 3], 'unique'],
+     'Oct': [[10], 'unique'],
+     'SON': [[9, 10, 11], 'unique'],
+     'Sep': [[9], 'unique'],
+     'day': ['year', 'month', 'day'],
+     'mon': ['year', 'month'],
+     'sem': [[12, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11], 'unique'],
+     'yr': ['year']}
+
 def calc_grouping(grouping):
     """
     translate time grouping abbreviation (e.g 'JJA') into the appropriate ocgis calc_grouping syntax
@@ -316,6 +339,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     #         return None
     # else:
     #     output = geom_file
+
 
     # try:
     #     from flyingpigeon.utils import unrotate_pole
