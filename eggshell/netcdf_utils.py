@@ -1,10 +1,10 @@
 from netCDF4 import Dataset, MFDataset, num2date
 from ocgis import RequestDataset
-import datetime as dt
+from datetime import datetime as dt
 import time
 import logging
 LOGGER = logging.getLogger("PYWPS")
-
+#from esgf_utils import ATTRIBUTE_TO_FACETS_MAP
 
 def get_calendar(resource, variable=None):
     """
@@ -261,11 +261,11 @@ def get_time(resource):
             #     ts = [dt.strptime(str(i), '%Y') for i in timestamps]
             # else:
             #     ts = [dt.strptime(str(i), '%Y-%m-%d %H:%M:%S') for i in timestamps]
-        except:
-            msg = 'failed to convert times to string'
+        except Exception as e:
+            msg = 'failed to convert times to string: {}'.format(e)
             LOGGER.exception(msg)
-    except:
-        msg = 'failed to convert time'
+    except Exception as e:
+        msg = 'failed to convert time: {}'.format(e)
         LOGGER.exception(msg)
     return ts
 
@@ -303,6 +303,31 @@ def get_values(resource, variable=None):
         ds = MFDataset(resource)
     vals = squeeze(ds.variables[variable][:])
     return vals
+
+
+def rename_variable(resource, oldname=None, newname='newname'):
+    """
+    Change the variable name of a netCDF variable
+
+    :param resource: path to netCDF input file
+    :param oldname: variable name to be changed
+    :param newname: variable name to be given
+
+    :retunrs str: path to resource
+    """
+    try:
+        if oldname is None:
+            oldname = get_variable(resource)
+        if oldname != newname:
+            from netCDF4 import Dataset
+            ds = Dataset(resource, mode='a')
+            ds.renameVariable(oldname, newname)
+            ds.close()
+            LOGGER.info('varname %s in netCDF renamed to %s' % (oldname, newname))
+    except Exception as e:
+        msg = 'failed to rename variable in target files %s ' % e
+        LOGGER.debug(msg)
+        raise Exception(msg)
 
 
 
@@ -381,7 +406,6 @@ def unrotate_pole(resource, write_to_file=False):
     return lats, lons
 
 
-# TODO: doc
 def sort_by_time(resource):
     """
     Sort a list of files by their time variable.
@@ -454,9 +478,9 @@ def sort_by_filename(resource, historical_concatination=False):
                                     ndic[key].append(path.abspath(n))  # path.join(p, n))
 
                         elif historical_concatination is True:
-                            key_hist = key.replace('rcp26', 'historical'). \
-                                replace('rcp45', 'historical'). \
-                                replace('rcp65', 'historical'). \
+                            key_hist = key.replace('rcp26', 'historical').\
+                                replace('rcp45', 'historical').\
+                                replace('rcp65', 'historical').\
                                 replace('rcp85', 'historical')
                             for n in resource:
                                 if '%s_' % key in n or '%s_' % key_hist in n:
@@ -494,32 +518,3 @@ def sort_by_filename(resource, historical_concatination=False):
 
 
 
-def search_landsea_mask_by_esgf(resource):
-    """
-    Search a landsea mask (variable sftlf) in ESGF which matches the
-    NetCDF attributes in the NetCDF files ``resource``.
-
-    Raises an Exception if no mask is found.
-
-    Returns the OpenDAP URL of the first found mask file.
-    """
-    # fill search constraints from nc attributes
-    ds = Dataset(resource)
-    attributes = ds.ncattrs()
-    constraints = dict(variable="sftlf")
-    for attr, facet in ATTRIBUTE_TO_FACETS_MAP.iteritems():
-        if attr in attributes:
-            constraints[facet] = ds.getncattr(attr)
-
-    # run file search
-    conn = SearchConnection(config.esgfsearch_url(), distrib=config.esgfsearch_distrib())
-    ctx = conn.new_context(search_type=TYPE_FILE, **constraints)
-    if ctx.hit_count == 0:
-        raise Exception("Could not find a mask in ESGF for dataset {0}".format(
-            os.path.basename(resource)))
-        # LOGGER.exception("Could not find a mask in ESGF.")
-        # return
-    if ctx.hit_count > 1:
-        LOGGER.warn("Found more then one mask file.")
-    results = ctx.search(batch_size=1)
-    return results[0].opendap_url

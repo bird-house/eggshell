@@ -14,7 +14,7 @@ from matplotlib.colors import Normalize
 from cartopy import config as cartopy_config
 from cartopy.util import add_cyclic_point
 import cartopy.crs as ccrs
-from flyingpigeon import utils
+#from flyingpigeon import utils
 
 LOGGER = logging.getLogger("PYWPS")
 

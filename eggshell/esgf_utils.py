@@ -1,3 +1,60 @@
+from netcdf_utils import sort_by_time, get_timerange, get_variable
+import netCDF4 as nc
+import logging
+from pyesgf.search.connection import SearchConnection
+from pyesgf.search import TYPE_FILE
+LOGGER = logging.getLogger("PYWPS")
+
+ATTRIBUTE_TO_FACETS_MAP = dict(
+    project_id='project',
+    experiment='experiment',
+    CORDEX_domain='domain',
+    institute_id='institute',
+    driving_model_id='driving_model',
+)
+
+def aggregations(resource):
+    """
+    aggregates netcdf files by experiment. Aggregation examples:
+
+    CORDEX: EUR-11_ICHEC-EC-EARTH_historical_r3i1p1_DMI-HIRHAM5_v1_day
+    CMIP5:
+    We collect for each experiment all files on the time axis:
+    200101-200512, 200601-201012, ...
+
+    Time axis is sorted by time.
+
+    :param resource: list of netcdf files
+
+    :return: dictionary with key=experiment
+    """
+
+    aggregations = {}
+    for nc in resource:
+        key = drs_filename(nc, skip_timestamp=True, skip_format=True)
+
+        # collect files of each aggregation (time axis)
+        if key in aggregations:
+            aggregations[key]['files'].append(nc)
+        else:
+            aggregations[key] = dict(files=[nc])
+
+    # collect aggregation metadata
+    for key in aggregations.keys():
+        # sort files by time
+        aggregations[key]['files'] = sort_by_time(aggregations[key]['files'])
+        # start timestamp of first file
+        start, _ = get_timerange(aggregations[key]['files'][0])
+        # end timestamp of last file
+        _, end = get_timerange(aggregations[key]['files'][-1])
+        aggregations[key]['from_timestamp'] = start
+        aggregations[key]['to_timestamp'] = end
+        aggregations[key]['start_year'] = int(start[0:4])
+        aggregations[key]['end_year'] = int(end[0:4])
+        aggregations[key]['variable'] = get_variable(aggregations[key]['files'][0])
+        aggregations[key]['filename'] = "%s_%s-%s.nc" % (key, start, end)
+    return aggregations
+
 
 def drs_filename(resource, skip_timestamp=False, skip_format=False,
                  variable=None, rename_file=False, add_file_path=False):
@@ -25,7 +82,7 @@ def drs_filename(resource, skip_timestamp=False, skip_format=False,
     from os import path, rename
 
     try:
-        ds = Dataset(resource)
+        ds = nc.Dataset(resource)
         if variable is None:
             variable = get_variable(resource)
         # CORDEX example: EUR-11_ICHEC-EC-EARTH_historical_r3i1p1_DMI-HIRHAM5_v1_day
@@ -81,3 +138,34 @@ def drs_filename(resource, skip_timestamp=False, skip_format=False,
         LOGGER.exception('Could not generate DRS filename for %s', resource)
 
     return filename
+
+
+def search_landsea_mask_by_esgf(resource):
+    """
+    Search a landsea mask (variable sftlf) in ESGF which matches the
+    NetCDF attributes in the NetCDF files ``resource``.
+
+    Raises an Exception if no mask is found.
+
+    Returns the OpenDAP URL of the first found mask file.
+    """
+    # fill search constraints from nc attributes
+    ds = Dataset(resource)
+    attributes = ds.ncattrs()
+    constraints = dict(variable="sftlf")
+    for attr, facet in ATTRIBUTE_TO_FACETS_MAP.iteritems():
+        if attr in attributes:
+            constraints[facet] = ds.getncattr(attr)
+
+    # run file search
+    conn = SearchConnection(config.esgfsearch_url(), distrib=config.esgfsearch_distrib())
+    ctx = conn.new_context(search_type=TYPE_FILE, **constraints)
+    if ctx.hit_count == 0:
+        raise Exception("Could not find a mask in ESGF for dataset {0}".format(
+            os.path.basename(resource)))
+        # LOGGER.exception("Could not find a mask in ESGF.")
+        # return
+    if ctx.hit_count > 1:
+        LOGGER.warn("Found more then one mask file.")
+    results = ctx.search(batch_size=1)
+    return results[0].opendap_url

@@ -1,4 +1,13 @@
+import six
+import urlparse
+import os
+import requests
+import shutil
+from datetime import datetime as dt
+import time
 import logging
+import config
+from pywps import configuration
 LOGGER = logging.getLogger("PYWPS")
 
 
@@ -66,7 +75,7 @@ def archive(resources, format='tar', dir_output='.', mode='w'):
                 zf.write(f, basename(f))
             zf.close()
         except Exception as e:
-            msg = 'failed to create zip archive: %s' % msg
+            msg = 'failed to create zip archive: %s' % e
             LOGGER.exception(msg)
             raise Exception(msg)
             # LOGGER.info(print_info('zipfile_write.zip'))
@@ -120,52 +129,40 @@ def archiveextract(resource, path='.'):
         LOGGER.exception('failed to extract archive resource')
     return files
 
-def archiveextract(resource, path='.'):
+def check_creationtime(path, url):
     """
-    extracts archives (tar/zip)
+    Compares the creation time of an archive file with the file creation time of the local disc space.
 
-    :param resource: list/str of archive files (if netCDF files are in list,
-                     they are passed and returnd as well in the return)
-    :param path: define a directory to store the results (default='.')
+    :param path: Path to the local file
+    :param url: URL to the archive file
 
-    :return: [list of extracted files]
-    :rtype: list
+    :returns boolean: True/False (True if archive file is newer)
     """
-    from tarfile import open
-    import zipfile
-    from os.path import basename, join
 
     try:
-        if isinstance(resource, six.string_types):
-            resource = [resource]
-        files = []
+        req = requests.head(url)
+        LOGGER.debug('headers: %s', req.headers.keys())
+        if 'Last-Modified' not in req.headers:
+            return False
+        LOGGER.info("Last Modified: %s", req.headers['Last-Modified'])
 
-        for archive in resource:
-            try:
-                LOGGER.debug("archive=%s", archive)
-                # if mime_type == 'application/x-netcdf':
-                if basename(archive).split('.')[-1] == 'nc':
-                    files.append(join(path, archive))
-                # elif mime_type == 'application/x-tar':
-                elif basename(archive).split('.')[-1] == 'tar':
-                    tar = open(archive, mode='r')
-                    tar.extractall()
-                    files.extend([join(path, nc) for nc in tar.getnames()])
-                    tar.close()
-                # elif mime_type == 'application/zip':
-                elif basename(archive).split('.')[1] == 'zip':
-                    zf = zipfile.open(archive, mode='r')
-                    zf.extractall()
-                    files.extend([join(path, nc) for nc in zf.filelist])
-                    zf.close()
-                else:
-                    LOGGER.warn('file extention unknown')
-            except Exception as e:
-                LOGGER.exception('failed to extract sub archive')
-    except Exception as e:
-        LOGGER.exception('failed to extract archive resource')
-    return files
+        # CONVERTING HEADER TIME TO UTC TIMESTAMP
+        # ASSUMING 'Sun, 28 Jun 2015 06:30:17 GMT' FORMAT
+        meta_modifiedtime = time.mktime(
+            dt.strptime(req.headers['Last-Modified'], "%a, %d %b %Y %X GMT").timetuple())
 
+        # file = 'C:\Path\ToFile\somefile.xml'
+        if os.path.getmtime(path) < meta_modifiedtime:
+            LOGGER.info("local file is older than archive file.")
+            newer = True
+        else:
+            LOGGER.info("local file is up-to-date. Nothing to fetch.")
+            newer = False
+    except Exception:
+        msg = 'failed to check archive and cache creation time assuming newer = False'
+        LOGGER.exception(msg)
+        newer = False
+    return newer
 
 def download(url, cache=False):
     """
@@ -373,3 +370,11 @@ class FreeMemory(object):
     @property
     def swap_used(self):
         return self._convert * self._swapu
+
+def prepare_static_folder():
+    """
+    Link static folder to output folder.
+    """
+    destination = os.path.join(config.output_path(), 'static')
+    if not os.path.exists(destination):
+        os.symlink(config.static_path(), destination)
