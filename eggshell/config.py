@@ -1,23 +1,54 @@
 import os
 from pywps import configuration
-
-_PATH = os.path.abspath(os.path.dirname(__file__))
-
-
 import logging
 LOGGER = logging.getLogger("PYWPS")
 
 
-def cache_path():
-    cache_path = configuration.get_config_value("cache", "cache_path")
-    if not cache_path:
-        LOGGER.warn("No cache path configured. Using default value.")
-        cache_path = os.path.join(configuration.get_config_value("server", "outputpath"), "cache")
-    return cache_path
+class Paths(object):
+    """This class facilitates the configuration of WPS birds."""
+    def __init__(self, module):
+        """Instantiate class relative to the given module.
 
+        :param module: Imported module relative to which paths will be defined.
+        """
+        self._base = module.__path__[0]
 
-def data_path():
-    return os.path.join(_PATH, 'data')
+    @property
+    def cache(self):
+        out = configuration.get_config_value("cache", "cache_path")
+        if not out:
+            LOGGER.warn("No cache path configured. Using default value.")
+            out = os.path.join(configuration.get_config_value("server", "outputpath"), "cache")
+        return out
+
+    @property
+    def data(self):
+        return os.path.join(self._base, 'data')
+
+    @property
+    def masks(self):
+        # TODO: currently this folder is not used
+        return os.path.join(self.data, 'masks')
+
+    @property
+    def output(self):
+        return configuration.get_config_value("server", "outputpath")
+
+    @property
+    def Rsrc_dir(self):
+        return os.path.join(self._base, 'Rsrc')
+
+    @property
+    def shapefiles(self):
+        return os.path.join(self.data, 'shapefiles')
+
+    @property
+    def static(self):
+        return os.path.join(self._base, 'static')
+
+    @property
+    def testdata(self):
+        return os.path.join(self._base, 'tests/testdata')
 
 
 def esgfsearch_distrib():
@@ -36,33 +67,8 @@ def esgfsearch_url():
     return url
 
 
-def masks_path():
-    # TODO: currently this folder is not used
-    return os.path.join(data_path(), 'masks')
-
-
-def output_path():
-    return configuration.get_config_value("server", "outputpath")
-
-
 def output_url():
     url = configuration.get_config_value("server", "outputurl")
     if url:
         url = url.rstrip('/')
     return url
-
-
-def Rsrc_dir():
-    return os.path.join(_PATH, 'Rsrc')
-
-
-def shapefiles_path():
-    return os.path.join(data_path(), 'shapefiles')
-
-
-def static_path():
-    return os.path.join(_PATH, 'static')
-
-
-def testdata_path():
-    return os.path.join(_PATH, 'tests/testdata')
