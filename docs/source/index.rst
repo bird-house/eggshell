@@ -11,14 +11,27 @@ Welcome to eggshell's documentation!
 Introduction
 ============
 
-eggshell is part of the `Birdhouse <http://bird-house.github.io>`_ project.
+Eggshell is part of the `Birdhouse <http://bird-house.github.io>`_ project. It is meant as a collection of utilities
+for bird-house' WPS servers. It covers server configuration, logging, file handling, general netCDF operations and OCGIS-related
+functions.
 
+You'll find the full set of utilities in the `API`_ section
 
 Contents:
 
 .. toctree::
+   :caption: Main
    :maxdepth: 2
 
+   config
+   log
+
+.. toctree::
+   :caption: API Documentation
+   :glob:
+   :maxdepth: 2
+
+   design
 
 Indices and tables
 ==================

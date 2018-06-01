@@ -1,8 +1,11 @@
-import os
 import logging
 
 
 def init_process_logger(filename=None):
+    """Connect and initialize the logging mechanism to a given file.
+
+    :param str filename: Logging file name. Defaults to log.txt
+    """
     filename = filename or 'log.txt'
     # create console handler and set level to debug
     ch = logging.FileHandler(filename=filename, mode="a", delay=False)
