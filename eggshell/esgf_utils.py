@@ -15,7 +15,12 @@ ATTRIBUTE_TO_FACETS_MAP = dict(
 
 def aggregations(resource):
     """
-    aggregates netcdf files by experiment. Aggregation examples:
+    Aggregate netcdf files by experiment.
+
+
+
+    Example
+    -------
 
     CORDEX: EUR-11_ICHEC-EC-EARTH_historical_r3i1p1_DMI-HIRHAM5_v1_day
     CMIP5:
@@ -142,12 +147,16 @@ def drs_filename(resource, skip_timestamp=False, skip_format=False,
 
 def search_landsea_mask_by_esgf(resource):
     """
-    Search a landsea mask (variable sftlf) in ESGF which matches the
-    NetCDF attributes in the NetCDF files ``resource``.
+    Search the ESGF for a land-sea mask (variable sftlf) associated with
+    the given netCDF `resource`.
 
-    Raises an Exception if no mask is found.
+    The attributes of the resource are extracted and used to find the mask
+    for the same domain, model, project and experiment. An exception is raised
+    if no mask is found.
 
-    Returns the OpenDAP URL of the first found mask file.
+    :param str resource: Path to netCDF file.
+
+    :returns: OpenDAP URL of the first mask file found.
     """
     # fill search constraints from nc attributes
     ds = Dataset(resource)

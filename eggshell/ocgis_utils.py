@@ -102,9 +102,10 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
          select_nearest=False, select_ugid=None, spatial_wrapping=None,
          t_calendar=None, time_region=None,
          time_range=None, dir_output=None, output_format='nc'):
-    '''
-    ocgis operation call
-    :param resource:
+    """
+    Call OCGIS operation.
+
+    :param resource: Input netCDF file.
     :param variable: variable in the input file to be picked
     :param dimension_map: dimension map in case of unconventional storage of data
     :param agg_selection: For aggregation of in case of mulitple polygons geoms
@@ -137,7 +138,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     :param dir_output (default= curdir):
     :param output_format:
     :return: output file path
-    '''
+    """
     LOGGER.info('Start ocgis module call function')
     from ocgis import OcgOperations, RequestDataset, env, DimensionMap, crs
     from ocgis.util.large_array import compute
@@ -365,6 +366,12 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     return output
 
 def has_variable(resource, variable):
+    """Check if resource has variable.
+
+    :param resource: netCDF file.
+    :param str variable: Name of variable.
+    :return bool: Whether resource has variable or not.
+    """
     success = False
     try:
         rd = RequestDataset(uri=resource)
