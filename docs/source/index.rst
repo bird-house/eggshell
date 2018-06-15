@@ -15,7 +15,9 @@ Eggshell is part of the `Birdhouse <http://bird-house.github.io>`_ project. It i
 for bird-house' WPS servers. It covers server configuration, logging, file handling, general netCDF operations and OCGIS-related
 functions.
 
-You'll find the full set of utilities in the `API <autoapi/index.html>`_ section
+You'll find the full set of utilities in the `API <autoapi/index.html>`_ section.
+For the moment, it is only used by FlyingPigeon, but we encourage developers to contribute their own code to eggshell
+to make it one of the building blocks of climate related PyWPS services.
 
 Contents:
 
