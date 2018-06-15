@@ -1,5 +1,5 @@
 from netCDF4 import Dataset, MFDataset, num2date
-from ocgis import RequestDataset
+from eggshell.ocgis import RequestDataset
 from datetime import datetime as dt
 import time
 import logging

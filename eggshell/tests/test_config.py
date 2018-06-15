@@ -1,4 +1,3 @@
-import pytest
 import six
 import eggshell
 from eggshell.config import Paths

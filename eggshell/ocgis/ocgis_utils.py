@@ -1,7 +1,7 @@
 from os.path import join, abspath, dirname, getsize, curdir, isfile
-import config
+import eggshell.config
 import logging
-from ocgis import RequestDataset
+from eggshell.ocgis import RequestDataset
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -148,7 +148,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     import uuid
 
     # prepare the environment
-    env.DIR_SHPCABINET = config.shapefiles_path()
+    env.DIR_SHPCABINET = eggshell.config.shapefiles_path()
     env.OVERWRITE = True
     # env.DIR_OUTPUT = dir_output
     # LOGGER.debug(' **** env.DIR_OUTPUT  = %s ' % env.DIR_OUTPUT)

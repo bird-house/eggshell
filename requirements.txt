@@ -1,4 +1,2 @@
-threddsclient
 requests
-#ocgis
-#netCDF4
+pytest

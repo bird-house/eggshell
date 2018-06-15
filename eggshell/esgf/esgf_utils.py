@@ -1,4 +1,4 @@
-from netcdf_utils import sort_by_time, get_timerange, get_variable
+from eggshell.nc.netcdf_utils import sort_by_time, get_timerange, get_variable
 import netCDF4 as nc
 import logging
 from pyesgf.search.connection import SearchConnection

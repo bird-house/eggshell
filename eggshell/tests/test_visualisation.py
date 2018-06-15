@@ -1,8 +1,9 @@
-from matplotlib import pyplot as plt
+
 
 def test_plotlibs():
+    from matplotlib import pyplot as plt
     import matplotlib
-    matplotlib.use('Agg')   # use this if no xserver is available
+
     from matplotlib import pyplot as plt
     from matplotlib.colors import Normalize
     from cartopy import config as cartopy_config
