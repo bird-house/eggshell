@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime as dt
 import time
 import logging
-import config
+import eggshell.config
 from pywps import configuration
 LOGGER = logging.getLogger("PYWPS")
 
@@ -177,7 +177,7 @@ def download(url, cache=False):
     try:
         if cache:
             parsed_url = urlparse.urlparse(url)
-            filename = os.path.join(config.cache_path(), parsed_url.netloc, parsed_url.path.strip('/'))
+            filename = os.path.join(eggshell.config.cache_path(), parsed_url.netloc, parsed_url.path.strip('/'))
             if os.path.exists(filename):
                 LOGGER.info('file already in cache: %s', os.path.basename(filename))
                 if check_creationtime(filename, url):
@@ -375,6 +375,6 @@ def prepare_static_folder():
     """
     Link static folder to output folder.
     """
-    destination = os.path.join(config.output_path(), 'static')
+    destination = os.path.join(eggshell.config.output_path(), 'static')
     if not os.path.exists(destination):
-        os.symlink(config.static_path(), destination)
+        os.symlink(eggshell.config.static_path(), destination)
