@@ -1,7 +1,7 @@
 from os.path import join, abspath, dirname, getsize, curdir, isfile
 import eggshell.config
 import logging
-from eggshell.ocgis import RequestDataset
+from ocgis import RequestDataset
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -92,7 +92,7 @@ def calc_grouping(grouping):
     return calc_grouping
 
 # TODO: check freememory with ben
-# TODO: include regridding with ocgis
+# TODO: include regridding with ocg
 
 
 def call(resource=[], variable=None, dimension_map=None, agg_selection=True, calc=None,

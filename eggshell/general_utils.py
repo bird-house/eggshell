@@ -290,7 +290,7 @@ def searchfile(pattern, base_dir):
 
     return nc_list
 
-# TODO: Optimize and link to ocgis module.
+# TODO: Optimize and link to ocg module.
 class FreeMemory(object):
     """
     Non-cross platform way to get free memory on Linux. Note that this code
