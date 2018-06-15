@@ -14,7 +14,7 @@ from matplotlib.colors import Normalize
 from cartopy import config as cartopy_config
 from cartopy.util import add_cyclic_point
 import cartopy.crs as ccrs
-#from flyingpigeon import utils
+from flyingpigeon import utils
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -185,8 +185,8 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png'):
                 ts = fieldmean(nc)
                 plt.plot(dt, ts)
                 # fig.line( dt,ts )
-            except:
-                msg = "spaghetti plot failed for %s " % nc
+            except Exception as e:
+                msg = "spaghetti plot failed for {} : {}".format(nc, e)
                 LOGGER.exception(msg)
 
         plt.title(title, fontsize=20)
@@ -196,8 +196,8 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png'):
 
         plt.close()
         LOGGER.info('timeseries spaghetti plot done for %s with %s lines.' % (variable, c))
-    except:
-        msg = 'matplotlib spaghetti plot failed'
+    except Exception as e:
+        msg = 'matplotlib spaghetti plot failed: {}'.format(e)
         LOGGER.exception(msg)
     return output_png
 
@@ -457,7 +457,7 @@ def concat_images(images, orientation='v'):
     elif len(images) == 1:
         image = images[0]
     else:
-        LOGGER.exception('No concatable number of images: %s, Dummy will be produced' % len(image))
+        LOGGER.exception('No concatable number of images: %s, Dummy will be produced' % len(images))
         _, image = mkstemp(dir='.', suffix='.png')
         result = Image.new("RGB", (50, 50))
         result.save(image)

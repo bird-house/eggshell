@@ -20,7 +20,7 @@ dependencies:
 - iris
 ################
 - libnetcdf
-- netcdftime # This does not seem to be installed with netCDF4...
+- netCDF4
 - ocgis
 ################
 
