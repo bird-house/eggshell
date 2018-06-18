@@ -19,4 +19,27 @@ Eggshell is a Python library with common functionality shared by WPS birds.
 
 Eggshell is part of the `Birdhouse`_ project.
 
+Install with Conda
+==================
+
+.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/installer/conda.svg
+   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
+   :alt: Conda Installer
+
+.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/version.svg
+   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
+   :alt: Conda Version
+
+.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/downloads.svg
+   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
+   :alt: Conda Downloads
+
+.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/latest_release_date.svg
+   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
+   :alt: Conda Release Date
+
+Install `eggshell` with the following command::
+
+  $ conda install -c birdhouse -c conda-forge birdhouse-eggshell 
+
 .. _Birdhouse: http://bird-house.github.io/en/latest/
