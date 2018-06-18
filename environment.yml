@@ -3,9 +3,15 @@ channels:
 - conda-forge
 - defaults
 dependencies:
+- pywps
+- pytest
+
+# Optional dependencies.
+# eggshell can be imported without them.
+# Only sub-packages will raise import errors
 ################
 # numeric
-- numpy
+#- numpy
 #- scipy
 ################
 # visualisation
@@ -14,6 +20,7 @@ dependencies:
 - iris
 ################
 - libnetcdf
+- netCDF4
 - ocgis
 ################
 

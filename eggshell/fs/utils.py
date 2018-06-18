@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime as dt
 import time
 import logging
-import config
+import eggshell.config
 from pywps import configuration
 LOGGER = logging.getLogger("PYWPS")
 
@@ -164,20 +164,20 @@ def check_creationtime(path, url):
         newer = False
     return newer
 
-def download(url, cache=False):
+def download(url, cache=None):
     """
     Downloads URL using the Python requests module to the current directory.
 
     :param URL: Link to the file.
-    :param cache: If True then files will be downloaded to a cache directory.
+    :param cache: If not None, then files will be downloaded to the given cache directory.
 
     :returns: Filename
     :rtype: str
     """
     try:
-        if cache:
+        if cache is not None:
             parsed_url = urlparse.urlparse(url)
-            filename = os.path.join(config.cache_path(), parsed_url.netloc, parsed_url.path.strip('/'))
+            filename = os.path.join(cache, parsed_url.netloc, parsed_url.path.strip('/'))
             if os.path.exists(filename):
                 LOGGER.info('file already in cache: %s', os.path.basename(filename))
                 if check_creationtime(filename, url):
@@ -194,9 +194,11 @@ def download(url, cache=False):
 # filename = os.path.basename(filename)
         else:
             filename = download_file(url)
+        return filename
+
     except Exception:
         LOGGER.exception('failed to download data')
-    return filename
+
 
 
 
@@ -371,10 +373,10 @@ class FreeMemory(object):
     def swap_used(self):
         return self._convert * self._swapu
 
-def prepare_static_folder():
+def prepare_static_folder(paths):
     """
     Link static folder to output folder.
     """
-    destination = os.path.join(config.output_path(), 'static')
+    destination = os.path.join(paths.output_path, 'static')
     if not os.path.exists(destination):
-        os.symlink(config.static_path(), destination)
+        os.symlink(paths.static_path, destination)

@@ -1,5 +1,5 @@
 from os.path import join, abspath, dirname, getsize, curdir, isfile
-import config
+import eggshell.config
 import logging
 from ocgis import RequestDataset
 
@@ -101,7 +101,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
          geom=None, output_format_options=None, search_radius_mult=2.,
          select_nearest=False, select_ugid=None, spatial_wrapping=None,
          t_calendar=None, time_region=None,
-         time_range=None, dir_output=None, output_format='nc'):
+         time_range=None, dir_output=None, output_format='nc', paths=):
     """
     Call OCGIS operation.
 
@@ -148,7 +148,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     import uuid
 
     # prepare the environment
-    env.DIR_SHPCABINET = config.shapefiles_path()
+    env.DIR_SHPCABINET = paths.shapefiles
     env.OVERWRITE = True
     # env.DIR_OUTPUT = dir_output
     # LOGGER.debug(' **** env.DIR_OUTPUT  = %s ' % env.DIR_OUTPUT)

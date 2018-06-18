@@ -34,9 +34,14 @@ class Paths(object):
         return os.path.join(self.data, 'masks')
 
     @property
-    def output(self):
-        """Return the path to the server output directory."""
+    def outputpath(self):
+        """Return the server directory for process outputs."""
         return configuration.get_config_value("server", "outputpath")
+
+    @property
+    def outputurl(self):
+        """Return the server URL for process outputs."""
+        return configuration.get_config_value("server", "outputurl").rstrip('/')
 
     @property
     def Rsrc_dir(self):
@@ -59,6 +64,9 @@ class Paths(object):
         return os.path.join(self._base, 'tests/testdata')
 
 
+
+
+# Should these go into the class or they're too specialized ?
 def esgfsearch_distrib():
     """TODO"""
     distrib = configuration.get_config_value("extra", "esgfsearch_distrib")
@@ -77,9 +85,3 @@ def esgfsearch_url():
     return url
 
 
-def output_url():
-    """Return the server configuration value for the process output URL."""
-    url = configuration.get_config_value("server", "outputurl")
-    if url:
-        url = url.rstrip('/')
-    return url
