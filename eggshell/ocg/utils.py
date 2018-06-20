@@ -101,7 +101,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
          geom=None, output_format_options=None, search_radius_mult=2.,
          select_nearest=False, select_ugid=None, spatial_wrapping=None,
          t_calendar=None, time_region=None,
-         time_range=None, dir_output=None, output_format='nc', paths=):
+         time_range=None, dir_output=None, output_format='nc'):
     """
     Call OCGIS operation.
 
