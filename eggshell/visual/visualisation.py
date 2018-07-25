@@ -14,7 +14,8 @@ from matplotlib.colors import Normalize
 from cartopy import config as cartopy_config
 from cartopy.util import add_cyclic_point
 import cartopy.crs as ccrs
-from flyingpigeon import utils
+from eggshell.general import utils
+# from flyingpigeon import utils
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -103,7 +104,8 @@ def plot_polygons(regions, file_extension='png'):
     from cartopy.feature import ShapelyFeature
     from numpy import mean, append
 
-    from flyingpigeon import config
+    import eggshell.config
+    # from flyingpigeon import config
     DIR_SHP = config.shapefiles_path()
 
     if type(regions) == str:
@@ -158,7 +160,7 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png'):
 
     :retruns str: path to png file
     """
-    from flyingpigeon.calculation import fieldmean
+    from eggshell.general.calculation import fieldmean
 
     try:
         fig = plt.figure(figsize=(20, 10), dpi=600, facecolor='w', edgecolor='k')
@@ -218,9 +220,13 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
     import pandas as pd
     import numpy as np
     from os.path import basename
-    from flyingpigeon.utils import get_time, sort_by_filename
-    from flyingpigeon.calculation import fieldmean
-    from flyingpigeon.metadata import get_frequency
+    from eggshell.general.utils import get_time, sort_by_filename
+    from eggshell.general.calculation import fieldmean
+    from eggshell.general.metadata import get_frequency
+    #
+    # from flyingpigeon.utils import get_time, sort_by_filename
+    # from flyingpigeon.calculation import fieldmean
+    # from flyingpigeon.metadata import get_frequency
 
     # === prepare invironment
     if type(resouces) == str:
@@ -324,7 +330,8 @@ def map_robustness(signal, high_agreement_mask, low_agreement_mask,
     :param title: default='Model agreement of signal'
     :returns str: path/to/file.png
     """
-    from flyingpigeon import utils
+    # from flyingpigeon import utils
+    from eggshell.general import utils
     from numpy import mean, ma
 
     if variable is None:
@@ -486,5 +493,3 @@ def pdfmerge(pdfs):
         _, mergedpdf = mkstemp(dir='.', suffix='.pdf')
 
     return mergedpdf
-
-
