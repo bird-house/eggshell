@@ -10,4 +10,5 @@ Development Lead
 Contributors
 ------------
 
-None yet. Why not be the first?
+* David Huard <huard.david@ouranos.ca>
+* Carsten Ehbrecht <ehbrecht@dkrz.de>
