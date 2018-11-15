@@ -11,7 +11,7 @@ with open('README.rst') as readme_file:
 with open('CHANGES.rst') as changes_file:
     changes = changes_file.read()
 
-requirements = []
+requirements = [line.strip() for line in open('requirements.txt')]
 
 setup_requirements = ['pytest-runner', ]
 

@@ -3,6 +3,7 @@ channels:
 - conda-forge
 - defaults
 dependencies:
+- six
 #- pywps
 # Optional dependencies.
 # eggshell can be imported without them.
