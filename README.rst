@@ -2,44 +2,36 @@
 Eggshell
 ========
 
-.. image:: https://travis-ci.org/bird-house/eggshell.svg?branch=master
-   :target: https://travis-ci.org/bird-house/eggshell
-   :alt: Travis Build
 
-.. image:: https://img.shields.io/github/license/bird-house/eggshell.svg
-   :target: https://github.com/bird-house/eggshell/blob/master/LICENSE.txt
-   :alt: GitHub license
+.. image:: https://img.shields.io/pypi/v/eggshell.svg
+        :target: https://pypi.python.org/pypi/eggshell
 
-.. image:: https://badges.gitter.im/bird-house/birdhouse.svg
-   :target: https://gitter.im/bird-house/birdhouse?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-   :alt: Join the chat at https://gitter.im/bird-house/birdhouse
+.. image:: https://img.shields.io/travis/bird-house/eggshell.svg
+        :target: https://travis-ci.org/bird-house/eggshell
+
+.. image:: https://readthedocs.org/projects/eggshell/badge/?version=latest
+        :target: https://eggshell.readthedocs.io/en/latest/?badge=latest
+        :alt: Documentation Status
 
 
-Eggshell is a Python library with common functionality shared by WPS birds.
 
-Eggshell is part of the `Birdhouse`_ project.
 
-Install with Conda
-==================
+Utilities common to multiple WPS birds.
 
-.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/installer/conda.svg
-   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
-   :alt: Conda Installer
 
-.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/version.svg
-   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
-   :alt: Conda Version
+* Free software: Apache Software License 2.0
+* Documentation: https://eggshell.readthedocs.io.
 
-.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/downloads.svg
-   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
-   :alt: Conda Downloads
 
-.. image:: https://anaconda.org/birdhouse/birdhouse-eggshell/badges/latest_release_date.svg
-   :target: https://anaconda.org/birdhouse/birdhouse-eggshell
-   :alt: Conda Release Date
+Features
+--------
 
-Install `eggshell` with the following command::
+* TODO
 
-  $ conda install -c birdhouse -c conda-forge birdhouse-eggshell 
+Credits
+-------
 
-.. _Birdhouse: http://bird-house.github.io/en/latest/
+This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
