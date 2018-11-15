@@ -8,10 +8,10 @@ from setuptools import setup, find_packages
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
+with open('CHANGES.rst') as changes_file:
+    changes = changes_file.read()
 
-requirements = [ ]
+requirements = []
 
 setup_requirements = ['pytest-runner', ]
 
@@ -36,7 +36,7 @@ setup(
     description="Utilities common to multiple WPS birds.",
     install_requires=requirements,
     license="Apache Software License 2.0",
-    long_description=readme + '\n\n' + history,
+    long_description=readme + '\n\n' + changes,
     include_package_data=True,
     keywords='eggshell',
     name='eggshell',
