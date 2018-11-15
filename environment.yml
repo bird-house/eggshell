@@ -1,0 +1,29 @@
+name: eggshell
+channels:
+- conda-forge
+- defaults
+dependencies:
+#- pywps
+# Optional dependencies.
+# eggshell can be imported without them.
+# Only sub-packages will raise import errors
+################
+# numeric
+#- numpy
+#- scipy
+################
+# visualisation
+#- matplotlib
+#- cartopy
+#- iris
+################
+#- libnetcdf
+#- netCDF4
+#- ocgis
+################
+# tests
+- pytest
+- flake8
+################
+# docs for development
+#- sphinx
