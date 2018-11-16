@@ -8,6 +8,7 @@ python:
 os:
   - linux
 #  - osx
+dist: trusty
 sudo: false
 install:
   # We do this conditionally because it saves us some downloading if the
