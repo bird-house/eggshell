@@ -9,7 +9,6 @@ Welcome to Eggshell's documentation!
    installation
    usage
    legacy
-   api/modules
    contributing
    authors
    changes
