@@ -13,15 +13,15 @@ with open('CHANGES.rst') as changes_file:
 
 requirements = [line.strip() for line in open('requirements.txt')]
 
-setup_requirements = ['pytest-runner', ]
+# setup_requirements = ['pytest-runner', ]
 
-test_requirements = ['pytest', ]
+# test_requirements = ['pytest', ]
 
 setup(
     author="Nils Hempelmann",
     author_email='info@nilshempelmann.de',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
@@ -41,9 +41,9 @@ setup(
     keywords='eggshell',
     name='eggshell',
     packages=find_packages(include=['eggshell']),
-    setup_requires=setup_requirements,
-    test_suite='tests',
-    tests_require=test_requirements,
+    # setup_requires=setup_requirements,
+    # test_suite='tests',
+    # tests_require=test_requirements,
     url='https://github.com/bird-house/eggshell',
     version='0.4.0',
     zip_safe=False,
