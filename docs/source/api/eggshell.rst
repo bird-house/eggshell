@@ -1,6 +1,13 @@
 eggshell package
 ================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    eggshell.legacy
+
 Submodules
 ----------
 

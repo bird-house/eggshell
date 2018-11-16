@@ -70,7 +70,7 @@ coverage: ## check code coverage quickly with the default Python
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/source/eggshell.rst
 	rm -f docs/source/modules.rst
-	sphinx-apidoc -o docs/ eggshell
+	sphinx-apidoc -o docs/source/api eggshell
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/build/html/index.html

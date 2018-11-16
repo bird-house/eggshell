@@ -1,5 +1,5 @@
 Welcome to Eggshell's documentation!
-======================================
+====================================
 
 .. toctree::
    :maxdepth: 2
@@ -8,7 +8,8 @@ Welcome to Eggshell's documentation!
    readme
    installation
    usage
-   modules
+   legacy
+   api/modules
    contributing
    authors
    changes
