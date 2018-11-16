@@ -11,6 +11,7 @@ from pywps import configuration
 LOGGER = logging.getLogger("PYWPS")
 
 
+@deprecated("use eggshell.utils.archive")
 def archive(resources, format='tar', dir_output='.', mode='w'):
     """
     Compresses a list of files into an archive.
