@@ -19,6 +19,8 @@ Ready to contribute? Here's how to set up `eggshell` for local development.
 
     $ cd eggshell/
     $ conda env create -f environment.yml
+    $ conda activate eggshell
+    $ pip install -r requirements_dev.txt # install develop tools like pytest
     $ python setup.py develop
 
 4. Create a branch for local development::
@@ -28,14 +30,16 @@ Ready to contribute? Here's how to set up `eggshell` for local development.
    Now you can make your changes locally.
 
 5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+   tests::
 
-    $ flake8 eggshell tests
+    $ flake8
     $ pytest
 
-   To get flake8 and pytest, just conda install them into your environment::
+   Or use the Makefile::
 
-     $ conda install pytest flake8
+     $ make lint
+     $ make test
+     $ make test-all
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -46,6 +50,14 @@ Ready to contribute? Here's how to set up `eggshell` for local development.
 7. Submit a pull request through the GitHub website.
 
 .. _conda: https://conda.io/docs/
+
+Write Documentation
+-------------------
+
+You can find the documentation in the `docs/source` folder. To generate the Sphinx
+documentation locally you can use the `Makefile`::
+
+  $ make docs
 
 Pull Request Guidelines
 -----------------------
@@ -65,7 +77,7 @@ Tips
 
 To run a subset of tests::
 
-$ py.test tests.test_eggshell
+$ pytest tests.test_utils
 
 
 Deploying
