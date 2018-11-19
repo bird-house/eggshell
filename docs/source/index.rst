@@ -1,20 +1,11 @@
-Welcome to Eggshell's documentation!
-====================================
+.. include:: ../../README.rst
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
 
-   readme
    installation
    usage
-   legacy
    contributing
+   legacy
    authors
    changes
-
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

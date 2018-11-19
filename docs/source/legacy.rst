@@ -11,6 +11,7 @@ Contents
 --------
 
 Eggshell is organized in submodules which are ordered by thematic functionality:
+
 * config
 * esgf
 * general
