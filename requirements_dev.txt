@@ -1,0 +1,13 @@
+-r requirements.txt
+pip
+bumpversion
+wheel
+watchdog
+flake8
+coverage
+Sphinx
+sphinx-autoapi
+twine
+
+pytest
+#pytest-runner==4.2

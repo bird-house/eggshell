@@ -1,5 +1,0 @@
-netCDF4
-matplotlib
-cartopy
-iris
-ocgis
