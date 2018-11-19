@@ -5,19 +5,7 @@ Legacy Modules
 ==============
 
 
-Developer guide
----------------
-
-Eggshell is being used as function library in other WPS services.
-
-Example to import eggshell:
-
-.. code-block:: python
-
-  from eggshell import config
-  import flyingpigeon as fp
-  paths = config.Paths(fp)
-  paths.data
+.. warning:: The legacy modules are deprecated and only kept as reference.
 
 Contents
 --------
