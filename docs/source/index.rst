@@ -7,6 +7,5 @@
    usage
    contributing
    development
-   legacy
    authors
    changes
