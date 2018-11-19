@@ -85,6 +85,7 @@ def archive(resources, format='tar', dir_output='.', mode='w'):
     return archive
 
 
+@deprecated("use eggshell.utils.extract_archive")
 def archiveextract(resource, path='.'):
     """
     extracts archives (tar/zip)
