@@ -93,7 +93,7 @@ def extract_archive(resources, output_dir=None):
             elif ext == 'zip':
                 with zipfile.open(archive, mode='r') as zf:
                     zf.extractall()
-                    files.extend([os.path.join(path, f) for f in zf.filelist])
+                    files.extend([os.path.join(output_dir, f) for f in zf.filelist])
             else:
                 LOGGER.warn('file extention {} unknown'.format(ext))
         except Exception:
