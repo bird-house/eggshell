@@ -2,11 +2,14 @@
 CHANGES
 =======
 
-0.4.0 (2018-11-15)
+0.4.0 (2018-11-19)
 ==================
 
-* refactored using cookiecutter template.
-* moved previous code to legacy.
+* regenerated Eggshell project using `cookiecutter` template.
+* moved previous code from `flyingpigeon` to `legacy` package.
+* added `eggshell.utils` module.
+* updated documentation to use conda environemnt.
+* enabled Python 3.7 test on Travis.
 
 0.3.0 (2018-07-30)
 ==================
