@@ -64,10 +64,10 @@ Ready to contribute? Here's how to set up `eggshell` for local development.
 
     $ git clone git@github.com:your_name_here/eggshell.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a conda_ environment. Assuming you have conda installed, this is how you set up your fork for local development::
 
-    $ mkvirtualenv eggshell
     $ cd eggshell/
+    $ conda env create -f environment.yml
     $ python setup.py develop
 
 4. Create a branch for local development::
@@ -80,10 +80,11 @@ Ready to contribute? Here's how to set up `eggshell` for local development.
    tests, including testing other Python versions with tox::
 
     $ flake8 eggshell tests
-    $ python setup.py test or py.test
-    $ tox
+    $ pytest
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+   To get flake8 and pytest, just conda install them into your environment::
+
+     $ conda install pytest flake8
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -92,6 +93,8 @@ Ready to contribute? Here's how to set up `eggshell` for local development.
     $ git push origin name-of-your-bugfix-or-feature
 
 7. Submit a pull request through the GitHub website.
+
+.. _conda: https://conda.io/docs/
 
 Pull Request Guidelines
 -----------------------
@@ -102,7 +105,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 2.7, 3.4, 3.5 and 3.6, and for PyPy. Check
+3. The pull request should work for Python 2.7, 3.6 and 3.7, and for PyPy. Check
    https://travis-ci.org/bird-house/eggshell/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
