@@ -19,16 +19,17 @@ Eggshell
     :alt: Join the chat at https://gitter.im/bird-house/birdhous
 
 
-Eggshell is part of the Birdhouse_ project. It is meant as a collection of utilities
-for bird-house' WPS servers. It covers miscellaneous functionality like file handling
-and common netCDF operations.
+Eggshell is meant as a collection of utilities for PyWPS_ servers.
+It covers miscellaneous functionality like file handling and common netCDF operations.
 
-Eggshell was inspired by FlyingPigeon_, but we encourage developers to contribute their own code to eggshell
-to make it one of the building blocks of climate related PyWPS services.
+Eggshell is part of the Birdhouse_ project.
+
+Eggshell was inspired by FlyingPigeon_.
+We encourage developers to contribute their own code to eggshell
+to make it one of the building blocks of climate related PyWPS_ services.
 
 * Free software: Apache Software License 2.0
 * Documentation: https://eggshell.readthedocs.io.
-
 
 Features
 --------
@@ -44,3 +45,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 .. _Birdhouse: http://bird-house.github.io
 .. _FlyingPigeon: https://flyingpigeon.readthedocs.io/en/latest/
+.. _PyWPS: http://pywps.org/
