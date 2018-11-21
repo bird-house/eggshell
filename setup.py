@@ -1,37 +1,48 @@
-import os
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""The setup script."""
 
 from setuptools import setup, find_packages
 
-version = __import__('eggshell').__version__
-here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.rst')).read()
-CHANGES = open(os.path.join(here, 'CHANGES.rst')).read()
+with open('README.rst') as readme_file:
+    readme = readme_file.read()
 
-reqs = [line.strip() for line in open('requirements.txt')]
+with open('CHANGES.rst') as changes_file:
+    changes = changes_file.read()
 
-classifiers = [
-    'Development Status :: 3 - Alpha',
-    'Intended Audience :: Science/Research',
-    'Operating System :: MacOS :: MacOS X',
-    'Operating System :: Microsoft :: Windows',
-    'Operating System :: POSIX',
-    'Programming Language :: Python',
-    'Topic :: Scientific/Engineering :: Atmospheric Science',
-]
+requirements = [line.strip() for line in open('requirements.txt')]
 
-setup(name='eggshell',
-      version=version,
-      description='General utilities to write processes for climate data analysis.',
-      long_description=README + '\n\n' + CHANGES,
-      classifiers=classifiers,
-      author='David Huard',
-      author_email='huard.david@ouranos.ca',
-      url='http://eggshell.readthedocs.io/en/latest/',
-      license="http://www.apache.org/licenses/LICENSE-2.0",
-      keywords='wps flyingpigeon pywps ipsl birdhouse conda climate indices species',
-      packages=find_packages(),
-      include_package_data=True,
-      zip_safe=False,
-      test_suite='eggshell',
-      install_requires=reqs,
-      )
+# setup_requirements = ['pytest-runner', ]
+
+# test_requirements = ['pytest', ]
+
+setup(
+    author="Nils Hempelmann",
+    author_email='info@nilshempelmann.de',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Natural Language :: English',
+        "Programming Language :: Python :: 2",
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+    ],
+    description="Utilities common to multiple WPS birds.",
+    install_requires=requirements,
+    license="Apache Software License 2.0",
+    long_description=readme + '\n\n' + changes,
+    include_package_data=True,
+    keywords='eggshell',
+    name='eggshell',
+    packages=find_packages(include=['eggshell']),
+    # setup_requires=setup_requirements,
+    # test_suite='tests',
+    # tests_require=test_requirements,
+    url='https://github.com/bird-house/eggshell',
+    version='0.4.0',
+    zip_safe=False,
+)
