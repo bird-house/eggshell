@@ -2,8 +2,10 @@
 CHANGES
 =======
 
-0.4.0 (2018-11-19)
+0.4.0 (2018-11-21)
 ==================
+
+Changes by PR #26:
 
 * regenerated Eggshell project using `cookiecutter` template.
 * moved previous code from `flyingpigeon` to `legacy` package.
