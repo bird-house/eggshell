@@ -27,4 +27,5 @@ dependencies:
 - flake8
 ################
 # docs for development
-#- sphinx
+- sphinx
+- sphinx-autoapi
