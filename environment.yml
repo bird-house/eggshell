@@ -28,4 +28,5 @@ dependencies:
 ################
 # docs for development
 - sphinx
-- sphinx-autoapi
+- pip:
+  - sphinx-autoapi
