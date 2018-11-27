@@ -10,16 +10,16 @@ dependencies:
 # Only sub-packages will raise import errors
 ################
 # numeric
-#- numpy
+- numpy
 #- scipy
 ################
 # visualisation
-#- matplotlib
-#- cartopy
+- matplotlib
+- cartopy
 #- iris
 ################
 #- libnetcdf
-#- netCDF4
+- netCDF4
 #- ocgis
 ################
 # tests

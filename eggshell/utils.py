@@ -81,7 +81,6 @@ def extract_archive(resources, output_dir=None):
     for archive in resources:
         try:
             LOGGER.debug("archive=%s", archive)
-
             ext = os.path.basename(archive).split('.')[-1]
 
             if ext == 'nc':
@@ -99,3 +98,54 @@ def extract_archive(resources, output_dir=None):
         except Exception:
             LOGGER.error('failed to extract sub archive {}'.format(archive))
     return files
+
+def get_coordinates(resource, variable=None, unrotate=False):
+    """
+    reads out the coordinates of a variable
+
+    :param resource: netCDF resource file
+    :param variable: variable name
+    :param unrotate: If True the coordinates will be returned for unrotated pole
+
+    :returns list, list: latitudes , longitudes
+    """
+    if type(resource) != list:
+        resource = [resource]
+
+    if variable is None:
+        variable = get_variable(resource)
+
+    if unrotate is False:
+        try:
+            if len(resource) > 1:
+                ds = MFDataset(resource)
+            else:
+                ds = Dataset(resource[0])
+
+            var = ds.variables[variable]
+            dims = list(var.dimensions)
+            if 'time' in dims: dims.remove('time')
+            # TODO: find position of lat and long in list and replace dims[0] dims[1]
+            lats = ds.variables[dims[0]][:]
+            lons = ds.variables[dims[1]][:]
+            ds.close()
+            LOGGER.info('got coordinates without pole rotation')
+        except Exception:
+            msg = 'failed to extract coordinates'
+            LOGGER.exception(msg)
+    else:
+        lats, lons = unrotate_pole(resource)
+        LOGGER.info('got coordinates with pole rotation')
+    return lats, lons
+    
+
+def rename_complexinputs(complexinputs):
+    """
+    TODO: this method is just a dirty workaround to rename input files according to the url name.
+    """
+    resources = []
+    for inpt in complexinputs:
+        new_name = inpt.url.split('/')[-1]
+        os.rename(inpt.file, new_name)
+        resources.append(os.path.abspath(new_name))
+    return resources
