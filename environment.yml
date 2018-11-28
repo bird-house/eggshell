@@ -14,8 +14,8 @@ dependencies:
 #- scipy
 ################
 # visualisation
-- matplotlib
-- cartopy
+#- matplotlib
+#- cartopy
 #- iris
 ################
 #- libnetcdf
