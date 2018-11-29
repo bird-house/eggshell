@@ -73,8 +73,6 @@ class Paths(object):
         return os.path.join(self._base, 'tests/testdata')
 
 
-
-
 # Should these go into the class or they're too specialized ?
 def esgfsearch_distrib():
     """TODO"""
