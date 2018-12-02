@@ -6,6 +6,40 @@ import logging
 LOGGER = logging.getLogger("PYWPS")
 #from esgf_utils import ATTRIBUTE_TO_FACETS_MAP
 
+
+class CookieNetCDFTransfer:
+    def __init__(self, request, opendap_hostnames=[]):
+        self.request = request
+        self.cookie = None
+        self.daprc_fn = '.daprc'
+        self.auth_cookie_fn = 'auth_cookie'
+        self.opendap_hostnames = opendap_hostnames
+
+    def __enter__(self):
+        self.cookie = get_auth_cookie(self.request)
+
+        if self.cookie:
+            with open(self.daprc_fn, 'w') as f:
+                f.write('HTTP.COOKIEJAR = auth_cookie')
+
+            with open(self.auth_cookie_fn, 'w') as f:
+                for opendap_hostname in self.opendap_hostnames:
+                    for key, value in self.cookie.items():
+                        f.write('{domain}\t{access_flag}\t{path}\t{secure}\t{expiration}\t{name}\t{value}\n'.format(
+                            domain=opendap_hostname,
+                            access_flag='FALSE',
+                            path='/',
+                            secure='FALSE',
+                            expiration=0,
+                            name=key,
+                            value=value))
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.cookie:
+            os.remove(self.daprc_fn)
+            os.remove(self.auth_cookie_fn)
+
+
 # def get_calendar(resource, variable=None):
 #     """
 #     returns the calendar and units in wich the timestamps are stored
