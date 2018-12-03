@@ -99,7 +99,6 @@ def extract_archive(resources, output_dir=None):
             LOGGER.error('failed to extract sub archive {}'.format(archive))
     return files
 
-
 def get_coordinates(resource, variable=None, unrotate=False):
     """
     reads out the coordinates of a variable
@@ -138,7 +137,7 @@ def get_coordinates(resource, variable=None, unrotate=False):
         lats, lons = unrotate_pole(resource)
         LOGGER.info('got coordinates with pole rotation')
     return lats, lons
-
+    
 
 def rename_complexinputs(complexinputs):
     """

@@ -75,6 +75,19 @@ def opendap_or_download(resource, auth_tkt_cookie={}, output_path=None,
             raise IOError("This does not appear to be a valid NetCDF file.")
         return output_file
     return resource
+#
+# def get_variable(resource):
+#     """
+#     replaced by guess_main_variables
+#
+#     detects processable variable name in netCDF file
+#
+#     :param resource: NetCDF file(s)
+#
+#     :returns str: variable name
+#     """
+#     rds = RequestDataset(resource)
+#     return rds.variable
 
 
 def guess_main_variables(ncdataset):
@@ -115,6 +128,99 @@ def guess_main_variables(ncdataset):
         elif (len(ncvar.shape) == nd) and (ncvar.size == size):
             main_variables.append(var_name)
     return main_variables
+
+
+def sort_by_filename(resource, historical_concatination=False):
+    """
+    Sort a list of files with CORDEX-conformant file names.
+
+    :param resource: netCDF file
+    :param historical_concatination: if True (default=False), appropriate historial
+                                    runs will be sorted to the rcp datasets
+    :return  dictionary: {'drs_filename': [list of netCDF files]}
+    """
+    from os import path
+    if type(resource) == str:
+        resource = [resource]
+
+    ndic = {}
+    tmp_dic = {}
+
+    try:
+        if len(resource) > 1:
+            LOGGER.debug('sort_by_filename module start sorting %s files' % len(resource))
+            # LOGGER.debug('resource is list with %s files' % len(resource))
+            try:  # if len(resource) > 1:
+                # collect the different experiment names
+                for nc in resource:
+                    # LOGGER.info('file: %s' % nc)
+                    p, f = path.split(path.abspath(nc))
+                    n = f.split('_')
+                    bn = '_'.join(n[0:-1])  # skipping the date information in the filename
+                    ndic[bn] = []  # dictionary containing all datasets names
+                LOGGER.info('found %s datasets', len(ndic.keys()))
+            except Exception:
+                LOGGER.exception('failed to find names of datasets!')
+            LOGGER.info('check for historical/RCP datasets')
+            try:
+                if historical_concatination is True:
+                    # select only necessary names
+                    if any("_rcp" in s for s in ndic.keys()):
+                        for key in ndic.keys():
+                            if 'historical' in key:
+                                ndic.pop(key)
+                        LOGGER.info('historical data set names removed from dictionary')
+                    else:
+                        LOGGER.info('no RCP dataset names found in dictionary')
+            except Exception:
+                LOGGER.exception('failed to pop historical data set names!')
+            LOGGER.info('start sorting the files')
+            try:
+                for key in ndic:
+                    try:
+                        if historical_concatination is False:
+                            for n in resource:
+                                if '%s_' % key in n:
+                                    ndic[key].append(path.abspath(n))  # path.join(p, n))
+
+                        elif historical_concatination is True:
+                            key_hist = key.replace('rcp26', 'historical').\
+                                replace('rcp45', 'historical').\
+                                replace('rcp65', 'historical').\
+                                replace('rcp85', 'historical')
+                            for n in resource:
+                                if '%s_' % key in n or '%s_' % key_hist in n:
+                                    ndic[key].append(path.abspath(n))  # path.join(p, n))
+                        else:
+                            LOGGER.error('append file paths to dictionary for key %s failed' % key)
+                        ndic[key].sort()
+                    except Exception:
+                        LOGGER.exception('failed for %s ' % key)
+            except Exception:
+                LOGGER.exception('failed to populate the dictionary with appropriate files')
+            for key in ndic.keys():
+                try:
+                    ndic[key].sort()
+                    start, end = get_timerange(ndic[key])
+                    newkey = key + '_' + start + '-' + end
+                    tmp_dic[newkey] = ndic[key]
+                except Exception:
+                    msg = 'failed to sort the list of resources and add dates to keyname: %s' % key
+                    LOGGER.exception(msg)
+                    tmp_dic[key] = ndic[key]
+                    # raise Exception(msg)
+        elif len(resource) == 1:
+            p, f = path.split(path.abspath(resource[0]))
+            tmp_dic[f.replace('.nc', '')] = path.abspath(resource[0])
+            LOGGER.debug('only one file! Nothing to sort, resource is passed into dictionary')
+        else:
+            LOGGER.debug('sort_by_filename module failed: resource is not 1 or >1')
+        LOGGER.info('sort_by_filename module done: %s datasets found' % len(ndic))
+    except Exception:
+        msg = 'failed to sort files by filename'
+        LOGGER.exception(msg)
+        raise Exception(msg)
+    return tmp_dic
 
 
 # def get_calendar(resource, variable=None):
@@ -381,16 +487,6 @@ def guess_main_variables(ncdataset):
 #     return ts
 #
 #
-# def get_variable(resource):
-#     """
-#     detects processable variable name in netCDF file
-#
-#     :param resource: NetCDF file(s)
-#
-#     :returns str: variable name
-#     """
-#     rds = RequestDataset(resource)
-#     return rds.variable
 #
 #
 # def get_values(resource, variable=None):
@@ -535,97 +631,6 @@ def guess_main_variables(ncdataset):
 #     return sorted_list
 #
 #
-# def sort_by_filename(resource, historical_concatination=False):
-#     """
-#     Sort a list of files with CORDEX-conformant file names.
-#
-#     :param resource: netCDF file
-#     :param historical_concatination: if True (default=False), appropriate historial
-#                                     runs will be sorted to the rcp datasets
-#     :return  dictionary: {'drs_filename': [list of netCDF files]}
-#     """
-#     from os import path
-#     if type(resource) == str:
-#         resource = [resource]
-#
-#     ndic = {}
-#     tmp_dic = {}
-#
-#     try:
-#         if len(resource) > 1:
-#             LOGGER.debug('sort_by_filename module start sorting %s files' % len(resource))
-#             # LOGGER.debug('resource is list with %s files' % len(resource))
-#             try:  # if len(resource) > 1:
-#                 # collect the different experiment names
-#                 for nc in resource:
-#                     # LOGGER.info('file: %s' % nc)
-#                     p, f = path.split(path.abspath(nc))
-#                     n = f.split('_')
-#                     bn = '_'.join(n[0:-1])  # skipping the date information in the filename
-#                     ndic[bn] = []  # dictionary containing all datasets names
-#                 LOGGER.info('found %s datasets', len(ndic.keys()))
-#             except Exception:
-#                 LOGGER.exception('failed to find names of datasets!')
-#             LOGGER.info('check for historical/RCP datasets')
-#             try:
-#                 if historical_concatination is True:
-#                     # select only necessary names
-#                     if any("_rcp" in s for s in ndic.keys()):
-#                         for key in ndic.keys():
-#                             if 'historical' in key:
-#                                 ndic.pop(key)
-#                         LOGGER.info('historical data set names removed from dictionary')
-#                     else:
-#                         LOGGER.info('no RCP dataset names found in dictionary')
-#             except Exception:
-#                 LOGGER.exception('failed to pop historical data set names!')
-#             LOGGER.info('start sorting the files')
-#             try:
-#                 for key in ndic:
-#                     try:
-#                         if historical_concatination is False:
-#                             for n in resource:
-#                                 if '%s_' % key in n:
-#                                     ndic[key].append(path.abspath(n))  # path.join(p, n))
-#
-#                         elif historical_concatination is True:
-#                             key_hist = key.replace('rcp26', 'historical').\
-#                                 replace('rcp45', 'historical').\
-#                                 replace('rcp65', 'historical').\
-#                                 replace('rcp85', 'historical')
-#                             for n in resource:
-#                                 if '%s_' % key in n or '%s_' % key_hist in n:
-#                                     ndic[key].append(path.abspath(n))  # path.join(p, n))
-#                         else:
-#                             LOGGER.error('append file paths to dictionary for key %s failed' % key)
-#                         ndic[key].sort()
-#                     except Exception:
-#                         LOGGER.exception('failed for %s ' % key)
-#             except Exception:
-#                 LOGGER.exception('failed to populate the dictionary with appropriate files')
-#             for key in ndic.keys():
-#                 try:
-#                     ndic[key].sort()
-#                     start, end = get_timerange(ndic[key])
-#                     newkey = key + '_' + start + '-' + end
-#                     tmp_dic[newkey] = ndic[key]
-#                 except Exception:
-#                     msg = 'failed to sort the list of resources and add dates to keyname: %s' % key
-#                     LOGGER.exception(msg)
-#                     tmp_dic[key] = ndic[key]
-#                     # raise Exception(msg)
-#         elif len(resource) == 1:
-#             p, f = path.split(path.abspath(resource[0]))
-#             tmp_dic[f.replace('.nc', '')] = path.abspath(resource[0])
-#             LOGGER.debug('only one file! Nothing to sort, resource is passed into dictionary')
-#         else:
-#             LOGGER.debug('sort_by_filename module failed: resource is not 1 or >1')
-#         LOGGER.info('sort_by_filename module done: %s datasets found' % len(ndic))
-#     except Exception:
-#         msg = 'failed to sort files by filename'
-#         LOGGER.exception(msg)
-#         raise Exception(msg)
-#     return tmp_dic
-#
+
 #
 #
