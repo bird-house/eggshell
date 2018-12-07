@@ -30,21 +30,22 @@ _EOBSVARIABLES_ = ['tg', 'tx', 'tn', 'rr']
 def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day', getlevel=True):
     """
     Fetches the reanalysis data (NCEP, 20CR or ERA_20C) to local file system
+
     :param start: int for start year to fetch source data
     :param end: int for end year to fetch source data (if None, current year will be the end)
     :param variable: variable name (default='slp'), geopotential height is given as e.g. z700
     :param dataset: default='NCEP'
+
     :return list: list of path/files.nc
     """
     # used for NETCDF convertion
     from netCDF4 import Dataset
-    from os import path, system
-    from eggshell.nc.ocg_utils import call
+    from os import path, system, remove
+    from eggshell.nc.ogc_utils import call
     from shutil import move
     # used for NETCDF convertion
 
     try:
-        from datetime import datetime as dt
 
         if end is None:
             end = dt.now().year
@@ -57,7 +58,7 @@ def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day
                 start = 1851
         LOGGER.info('start / end date set')
     except Exception as ex:
-        msg = "get_OBS module failed to get start end dates %s " % (ex)
+        msg = "get_OBS module failed to get start end dates: {}".format(ex)
         LOGGER.exception(msg)
         raise Exception(msg)
 
@@ -67,7 +68,9 @@ def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day
         level = None
 
     LOGGER.info('level: %s' % level)
-
+    cur_year = dt.now().year
+    cur_month = dt.now().month
+    cur_day = dt.now().day
     try:
         for year in range(start, end + 1):
             LOGGER.debug('fetching single file for %s year %s ' % (dataset, year))
@@ -75,6 +78,8 @@ def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day
                 if dataset == 'NCEP':
                     if variable == 'slp':
                         url = 'https://www.esrl.noaa.gov/psd/thredds/fileServer/Datasets/ncep.reanalysis.dailyavgs/surface/%s.%s.nc' % (variable, year)  # noqa
+                    if variable == 'pr_wtr':
+                        url = 'https://www.esrl.noaa.gov/psd/thredds/fileServer/Datasets/ncep.reanalysis.dailyavgs/surface/pr_wtr.eatm.%s.nc' % (year)  # noqa
                     if 'z' in variable:
                         url = 'https://www.esrl.noaa.gov/psd/thredds/fileServer/Datasets/ncep.reanalysis.dailyavgs/pressure/hgt.%s.nc' % (year)  # noqa
                 elif dataset == '20CRV2':
@@ -102,11 +107,26 @@ def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day
                 else:
                     LOGGER.debug('Dataset %s not known' % dataset)
                 LOGGER.debug('url: %s' % url)
-            except Except as ex:
-                msg = "could not set url %s" %  (ex)
+            except Exception as ex:
+                msg = "could not set url: {}".format(ex)
                 LOGGER.exception(msg)
             try:
-                df = utils.download(url, cache=True)
+                # force updating of the current year dataset
+                if year == cur_year:
+                    import urlparse
+                    from blackswan import config
+                    parsed_url = urlparse.urlparse(url)
+                    cur_filename = path.join(config.cache_path(), parsed_url.netloc, parsed_url.path.strip('/'))
+                    if path.exists(cur_filename):
+                        fn_time = dt.fromtimestamp(path.getmtime(cur_filename))
+                        LOGGER.debug('Rean data for %s year creation time: %s' % (year, fn_time))
+                        if (fn_time.year == cur_year) and (fn_time.month == cur_month) and (fn_time.day == cur_day):
+                            LOGGER.debug('Rean data for %s year is up-to-date' % year)
+                        else:
+                            LOGGER.debug('Rean data for %s year forced to update' % year)
+                            remove(cur_filename)
+                # ###########################################
+                df = download(url, cache=True)
                 LOGGER.debug('single file fetched %s ' % year)
                 # convert to NETCDF4_CLASSIC
                 try:
@@ -131,14 +151,14 @@ def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day
                     else:
                         obs_data.append(df)
                     ds.close()
-                except:
-                    LOGGER.exception('failed to convert into NETCDF4_CLASSIC')
-            except:
-                msg = "download failed on {0}.".format(url)
+                except Exception as ex:
+                    LOGGER.exception('failed to convert into NETCDF4_CLASSIC: {}'.format(ex))
+            except Exception as ex:
+                msg = "download failed on {}: {}".format(url, ex)
                 LOGGER.exception(msg)
         LOGGER.info('Reanalyses data fetched for %s files' % len(obs_data))
-    except:
-        msg = "get reanalyses module failed to fetch data"
+    except Exception as ex:
+        msg = "get reanalyses module failed to fetch data: {}".format(ex)
         LOGGER.exception(msg)
         raise Exception(msg)
 
