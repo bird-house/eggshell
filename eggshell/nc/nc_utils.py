@@ -423,95 +423,93 @@ def sort_by_filename(resource, historical_concatination=False):
 #     return start, end
 #
 #
-# def get_time(resource):
-#     """
-#     returns all timestamps of given netcdf file as datetime list.
-#
-#     :param resource: NetCDF file(s)
-#
-#     :return : list of timesteps
-#     """
-#     # :param format: if a format is provided (e.g format='%Y%d%m'), values will be converted to string
-#
-#     if type(resource) != list:
-#         resource = [resource]
-#
-#     try:
-#         if len(resource) > 1:
-#             ds = MFDataset(resource)
-#         else:
-#             ds = Dataset(resource[0])
-#         time = ds.variables['time']
-#     except:
-#         msg = 'failed to get time'
-#         LOGGER.exception(msg)
-#         raise Exception(msg)
-#
-#     try:
-#         if (hasattr(time, 'units') and hasattr(time, 'calendar')) is True:
-#             timestamps = num2date(time[:], time.units, time.calendar)
-#         elif hasattr(time, 'units'):
-#             timestamps = num2date(time[:], time.units)
-#         else:
-#             timestamps = num2date(time[:])
-#         ds.close()
-#         try:
-#             ts = [dt.strptime(str(i), '%Y-%m-%d %H:%M:%S') for i in timestamps]
-#
-#             # if date_format is not None:
-#             #     ts = [t.strftime(format=date_format) for t in timestamps]
-#             # else:
-#             #    ts = [dt.strptime(str(i), '%Y-%m-%d %H:%M:%S') for i in timestamps]
-#
-#             # TODO give out dateformat by frequency
-#             # ERROR: ValueError: unconverted data remains: 12:00:00
-#             # from flyingpigeon.metadata import get_frequency
-#
-#             # frq = get_frequency(resource)
-#             # if frq is 'day':
-#             #     ts = [dt.strptime(str(i), '%Y-%m-%d') for i in timestamps]
-#             # elif frq is 'mon':
-#             #     ts = [dt.strptime(str(i), '%Y-%m') for i in timestamps]
-#             # elif frq is 'sem':
-#             #     ts = [dt.strptime(str(i), '%Y-%m') for i in timestamps]
-#             # elif frq is 'yr':
-#             #     ts = [dt.strptime(str(i), '%Y') for i in timestamps]
-#             # else:
-#             #     ts = [dt.strptime(str(i), '%Y-%m-%d %H:%M:%S') for i in timestamps]
-#         except Exception as e:
-#             msg = 'failed to convert times to string: {}'.format(e)
-#             LOGGER.exception(msg)
-#     except Exception as e:
-#         msg = 'failed to convert time: {}'.format(e)
-#         LOGGER.exception(msg)
-#     return ts
-#
-#
-#
-#
-# def get_values(resource, variable=None):
-#     """
-#     returns the values for a list of files of files belonging to one dataset
-#
-#     :param resource: list of files
-#     :param variable: variable to be picked from the files (if not set, variable will be detected)
-#
-#     :returs numpy.array: values
-#     """
-#     from numpy import squeeze
-#     if variable is None:
-#         variable = get_variable(resource)
-#
-#     if isinstance(resource, basestring):
-#         ds = Dataset(resource)
-#     elif len(resource) == 1:
-#         ds = Dataset(resource)
-#     else:
-#         ds = MFDataset(resource)
-#     vals = squeeze(ds.variables[variable][:])
-#     return vals
-#
-#
+def get_time(resource):
+    """
+    returns all timestamps of given netcdf file as datetime list.
+
+    :param resource: NetCDF file(s)
+
+    :return : list of timesteps
+    """
+    # :param format: if a format is provided (e.g format='%Y%d%m'), values will be converted to string
+
+    if type(resource) != list:
+        resource = [resource]
+
+    try:
+        if len(resource) > 1:
+            ds = MFDataset(resource)
+        else:
+            ds = Dataset(resource[0])
+        time = ds.variables['time']
+    except:
+        msg = 'failed to get time'
+        LOGGER.exception(msg)
+        raise Exception(msg)
+
+    try:
+        if (hasattr(time, 'units') and hasattr(time, 'calendar')) is True:
+            timestamps = num2date(time[:], time.units, time.calendar)
+        elif hasattr(time, 'units'):
+            timestamps = num2date(time[:], time.units)
+        else:
+            timestamps = num2date(time[:])
+        ds.close()
+        try:
+            ts = [dt.strptime(str(i), '%Y-%m-%d %H:%M:%S') for i in timestamps]
+
+            # if date_format is not None:
+            #     ts = [t.strftime(format=date_format) for t in timestamps]
+            # else:
+            #    ts = [dt.strptime(str(i), '%Y-%m-%d %H:%M:%S') for i in timestamps]
+
+            # TODO give out dateformat by frequency
+            # ERROR: ValueError: unconverted data remains: 12:00:00
+            # from flyingpigeon.metadata import get_frequency
+
+            # frq = get_frequency(resource)
+            # if frq is 'day':
+            #     ts = [dt.strptime(str(i), '%Y-%m-%d') for i in timestamps]
+            # elif frq is 'mon':
+            #     ts = [dt.strptime(str(i), '%Y-%m') for i in timestamps]
+            # elif frq is 'sem':
+            #     ts = [dt.strptime(str(i), '%Y-%m') for i in timestamps]
+            # elif frq is 'yr':
+            #     ts = [dt.strptime(str(i), '%Y') for i in timestamps]
+            # else:
+            #     ts = [dt.strptime(str(i), '%Y-%m-%d %H:%M:%S') for i in timestamps]
+        except Exception as e:
+            msg = 'failed to convert times to string: {}'.format(e)
+            LOGGER.exception(msg)
+    except Exception as e:
+        msg = 'failed to convert time: {}'.format(e)
+        LOGGER.exception(msg)
+    return ts
+
+
+def get_values(resource, variable=None):
+    """
+    returns the values for a list of files of files belonging to one dataset
+
+    :param resource: list of files
+    :param variable: variable to be picked from the files (if not set, variable will be detected)
+
+    :returs numpy.array: values
+    """
+    from numpy import squeeze
+    if variable is None:
+        variable = get_variable(resource)
+
+    if isinstance(resource, basestring):
+        ds = Dataset(resource)
+    elif len(resource) == 1:
+        ds = Dataset(resource)
+    else:
+        ds = MFDataset(resource)
+    vals = squeeze(ds.variables[variable][:])
+    return vals
+
+
 # def rename_variable(resource, oldname=None, newname='newname'):
 #     """
 #     Change the variable name of a netCDF variable
