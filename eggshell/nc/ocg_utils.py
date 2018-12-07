@@ -29,9 +29,11 @@ temp_groups = {'AMJJAS': [[4, 5, 6, 7, 8, 9], 'unique'],
      'sem': [[12, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11], 'unique'],
      'yr': ['year']}
 
+# # TODO: include regridding with ocgis
+
 def call(resource=[], variable=None, dimension_map=None, agg_selection=True, calc=None,
          calc_grouping=None, conform_units_to=None, crs=None, memory_limit=None,  prefix=None,
-         regrid_destination=None, regrid_options='bil', level_range=None, cdover='python',
+         regrid_destination=None, regrid_options='bil', level_range=None,  # cdover='python',
          geom=None, output_format_options=None, search_radius_mult=2.,
          select_nearest=False, select_ugid=None, spatial_wrapping=None,
          t_calendar=None, time_region=None,
@@ -45,7 +47,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     :param agg_selection: For aggregation of in case of mulitple polygons geoms
     :param calc: ocgis calc syntax for calculation partion
     :param calc_grouping: time aggregate grouping
-    :param cdover: use py-cdo ('python', by default) or cdo from the system ('system')
+    :param cdover: OUTDATED use py-cdo ('python', by default) or cdo from the system ('system')
     :param conform_units_to:
     :param crs: coordinate reference system
     :param memory_limit: limit the amount of data to be loaded into the memory at once \
@@ -131,18 +133,16 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     # execute ocgis
     LOGGER.info('Execute ocgis module call function')
 
-    # # needed for some AFR-44 data
-    # dimension_map = DimensionMap()
-    # dimension_map.set_variable('x', 'lon', dimension='rlon')
-    # dimension_map.set_variable('y', 'lat', dimension='rlat')
-    # dimension_map.set_variable('time', 'time', dimension='time')
-    # crs=crs.Spherical()
-
     try:
         LOGGER.debug('call module curdir = %s ' % abspath(curdir))
-        rd = RequestDataset(resource, variable=variable, level_range=level_range,
-                            dimension_map=dimension_map, conform_units_to=conform_units_to,
-                            time_region=time_region, t_calendar=t_calendar, time_range=time_range) # , crs=crs)
+        rd = RequestDataset(resource,
+                            variable=variable,
+                            level_range=level_range,
+                            dimension_map=dimension_map,
+                            conform_units_to=conform_units_to,
+                            time_region=time_region,
+                            t_calendar=t_calendar,
+                            time_range=time_range)
 
         from ocgis.constants import DimensionMapKey
         rd.dimension_map.set_bounds(DimensionMapKey.TIME, None)
@@ -165,18 +165,19 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
                             select_ugid=select_ugid,
                             add_auxiliary_files=False)
         LOGGER.info('OcgOperations set')
-    except:
-        LOGGER.exception('failed to setup OcgOperations')
+    except Exception as ex:
+        LOGGER.exception('failed to setup OcgOperations: {}'.format(ex))
         return None
 
     try:
         LOGGER.info('ocgis module call as ops.execute()')
         geom_file = ops.execute()
-    except:
-        LOGGER.exception('failed to execute ocgis operation')
+    except Exception as ex:
+        LOGGER.exception('failed to execute ocgis operation : {}'.format(ex))
         return None
+    return geom_file
 
-    #
+    #TODO: memory check
     # try:
     #     from numpy import sqrt
     #     from flyingpigeon.utils import FreeMemory
@@ -251,53 +252,53 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     # except:
     #     LOGGER.exception('failed to compare dataload with free memory, calling as execute instead')
 
-    ############################################
-    # remapping according to regrid informations
-    ############################################
-    if regrid_destination is not None:
-        try:
-            if (cdover=='system'):
-                from os import system
-                remap = 'remap%s' % regrid_options
-                output = '%s.nc' % uuid.uuid1()
-                output = abspath(curdir)+'/'+output
-                comcdo = 'cdo -O %s,%s %s %s' % (remap, regrid_destination, geom_file, output)
-                system(comcdo)
-
-                if(isfile(output)==False):
-                    comcdo = '/usr/bin/cdo -O %s,%s %s %s' % (remap, regrid_destination, geom_file, output)
-                    system(comcdo)
-
-                if(isfile(output)==False): cdover='python'
-
-                # need to substitute by subprocess call
-                # TODO: If system failed - py-cdo used insted
-                # what if py-cdo failed, with option 'python'
-                # need to call 'system' in this case - need to write function
-
-            if (cdover=='python'):
-                from tempfile import mkstemp
-                from cdo import Cdo
-                cdo = Cdo()
-                output = '%s.nc' % uuid.uuid1()
-                remap = 'remap%s' % regrid_options
-                call = [op for op in dir(cdo) if remap in op]
-                cmd = "output = cdo.%s('%s',input='%s', output='%s')" \
-                      % (str(call[0]), regrid_destination, geom_file, output)
-                exec(cmd)
-        except Exception as e:
-            LOGGER.debug('failed to remap')
-            raise
-            return None
-    else:
-        output = geom_file
+    # ############################################
+    # # remapping according to regrid informations
+    # ############################################
+    # if regrid_destination is not None:
+    #     try:
+    #         if (cdover=='system'):
+    #             from os import system
+    #             remap = 'remap%s' % regrid_options
+    #             output = '%s.nc' % uuid.uuid1()
+    #             output = abspath(curdir)+'/'+output
+    #             comcdo = 'cdo -O %s,%s %s %s' % (remap, regrid_destination, geom_file, output)
+    #             system(comcdo)
+    #
+    #             if(isfile(output)==False):
+    #                 comcdo = '/usr/bin/cdo -O %s,%s %s %s' % (remap, regrid_destination, geom_file, output)
+    #                 system(comcdo)
+    #
+    #             if(isfile(output)==False): cdover='python'
+    #
+    #             # need to substitute by subprocess call
+    #             # TODO: If system failed - py-cdo used insted
+    #             # what if py-cdo failed, with option 'python'
+    #             # need to call 'system' in this case - need to write function
+    #
+    #         if (cdover=='python'):
+    #             from tempfile import mkstemp
+    #             from cdo import Cdo
+    #             cdo = Cdo()
+    #             output = '%s.nc' % uuid.uuid1()
+    #             remap = 'remap%s' % regrid_options
+    #             call = [op for op in dir(cdo) if remap in op]
+    #             cmd = "output = cdo.%s('%s',input='%s', output='%s')" \
+    #                   % (str(call[0]), regrid_destination, geom_file, output)
+    #             exec(cmd)
+    #     except Exception as e:
+    #         LOGGER.debug('failed to remap')
+    #         raise
+    #         return None
+    # else:
+    #     output = geom_file
 
     # try:
     #     from flyingpigeon.utils import unrotate_pole
     #     lat, lon = unrotate_pole(output)
     # except:
     #     LOGGER.exception('failed to unrotate pole')
-    return output
+      # output
 
 
 # def calc_grouping(grouping):
@@ -361,11 +362,6 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
 #         LOGGER.debug(msg)
 #         raise Exception(msg)
 #     return calc_grouping
-#
-# # TODO: check freememory with ben
-# # TODO: include regridding with ocgis
-#
-#
 
 # def has_variable(resource, variable):
 #     """Check if resource has variable.
