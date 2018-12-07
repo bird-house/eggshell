@@ -169,15 +169,47 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
         LOGGER.exception('failed to setup OcgOperations: {}'.format(ex))
         return None
 
+    #TODO include comaprison dataload to available memory
+
+    dataload = 1
+    available_memory = 2
+
     try:
-        LOGGER.info('ocgis module call as ops.execute()')
-        geom_file = ops.execute()
+        if dataload < available_memory:  # compare dataload to free_memory
+            LOGGER.info('ocgis module call as ops.execute()')
+            geom_file = ops.execute()
+        else:
+            LOGGER.info('ocgis module call as compute(ops)')
+            # TODO: estimate right tile_dimensionS
+            tile_dimension = 5  # default
+            LOGGER.info('ocgis module call compute with chunks')
+            if calc is None:  # TODO remove this section if issue 35 is fixed
+                calc = '%s=%s*1' % (variable, variable)
+                LOGGER.info('calc set to = %s ' % calc)
+            ops = OcgOperations(dataset=rd,
+                                output_format_options=output_format_options,
+                                dir_output=dir_output,
+                                spatial_wrapping=spatial_wrapping,
+                                spatial_reorder=spatial_reorder,
+                                # regrid_destination=rd_regrid,
+                                # options=options,
+                                calc=calc,
+                                calc_grouping=calc_grouping,
+                                geom=geom,
+                                output_format=output_format,
+                                prefix=prefix,
+                                search_radius_mult=search_radius_mult,
+                                select_nearest=select_nearest,
+                                select_ugid=select_ugid,
+                                add_auxiliary_files=False)
+            geom = compute(ops, tile_dimension=tile_dimension, verbose=True)
+
     except Exception as ex:
         LOGGER.exception('failed to execute ocgis operation : {}'.format(ex))
         return None
     return geom_file
 
-    #TODO: memory check
+
     # try:
     #     from numpy import sqrt
     #     from flyingpigeon.utils import FreeMemory
