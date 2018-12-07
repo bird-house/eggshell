@@ -2,10 +2,14 @@
 
 """Utitility functions."""
 
+
 import os
 import tempfile
 import tarfile
 import zipfile
+import requests
+import shutil
+from urllib.parse import urlparse
 
 import logging
 
@@ -60,6 +64,51 @@ def archive(resources, format=None, output_dir=None, mode=None):
     except Exception as e:
         raise Exception('failed to create {} archive: {}'.format(format, e))
     return archive
+
+
+def download_file(url, out=None, verify=False):
+    if out:
+        local_filename = out
+    else:
+        local_filename = url.split('/')[-1]
+    r = requests.get(url, stream=True, verify=verify)
+    with open(local_filename, 'wb') as fp:
+        shutil.copyfileobj(r.raw, fp)
+    return local_filename
+
+
+def download(url, cache=False):
+    """
+    Downloads URL using the Python requests module to the current directory.
+
+    :param cache: if True then files will be downloaded to a cache directory.
+    :param url: url adress of the target file location
+
+    :return str: filename
+    """
+    try:
+        if cache:
+            parsed_url = urlparse(url)
+            filename = os.path.join(config.cache_path(), parsed_url.netloc, parsed_url.path.strip('/'))
+            if os.path.exists(filename):
+                LOGGER.info('file already in cache: %s', os.path.basename(filename))
+                if check_creationtime(filename, url):
+                    LOGGER.info('file in cache older than archive file, downloading: %s ', os.path.basename(filename))
+                    os.remove(filename)
+                    filename = download_file(url, out=filename)
+            else:
+                if not os.path.exists(os.path.dirname(filename)):
+                    os.makedirs(os.path.dirname(filename))
+                LOGGER.info('downloading: %s', url)
+                filename = download_file(url, out=filename)
+                # make softlink to current dir
+                # os.symlink(filename, os.path.basename(filename))
+                # filename = os.path.basename(filename)
+        else:
+            filename = download_file(url)
+    except Exception:
+        LOGGER.exception('failed to download data')
+    return filename
 
 
 def extract_archive(resources, output_dir=None):
@@ -137,7 +186,7 @@ def get_coordinates(resource, variable=None, unrotate=False):
         lats, lons = unrotate_pole(resource)
         LOGGER.info('got coordinates with pole rotation')
     return lats, lons
-    
+
 
 def rename_complexinputs(complexinputs):
     """
