@@ -75,25 +75,29 @@ def opendap_or_download(resource, auth_tkt_cookie={}, output_path=None,
             raise IOError("This does not appear to be a valid NetCDF file.")
         return output_file
     return resource
-#
-# def get_variable(resource):
-#     """
-#     replaced by guess_main_variables
-#
-#     detects processable variable name in netCDF file
-#
-#     :param resource: NetCDF file(s)
-#
-#     :returns str: variable name
-#     """
-#     rds = RequestDataset(resource)
-#     return rds.variable
+
+
+def get_variable(resource):
+    """
+    detects processable variable name in netCDF file
+    based on ocgis (compare guess_main_variables)
+
+    :param resource: filepath sting or sorted list for netcdf file(s)
+
+    :returns str: variable name
+    """
+    rds = RequestDataset(resource)
+    return rds.variable
 
 
 def guess_main_variables(ncdataset):
     """Guess main variables in a NetCDF file.
+    (compare get_variable)
+
     :param ncdataset: netCDF4.Dataset
+
     :return list: names of main variables
+
     Notes
     -----
     The main variables are the one with highest dimensionality and size. The
@@ -258,45 +262,45 @@ def sort_by_filename(resource, historical_concatination=False):
 #     return str(calendar), str(unit)
 #
 #
-# def get_coordinates(resource, variable=None, unrotate=False):
-#     """
-#     reads out the coordinates of a variable
-#
-#     :param resource: netCDF resource file
-#     :param variable: variable name
-#     :param unrotate: If True the coordinates will be returned for unrotated pole
-#
-#     :returns list, list: latitudes , longitudes
-#     """
-#     if type(resource) != list:
-#         resource = [resource]
-#
-#     if variable is None:
-#         variable = get_variable(resource)
-#
-#     if unrotate is False:
-#         try:
-#             if len(resource) > 1:
-#                 ds = MFDataset(resource)
-#             else:
-#                 ds = Dataset(resource[0])
-#
-#             var = ds.variables[variable]
-#             dims = list(var.dimensions)
-#             if 'time' in dims: dims.remove('time')
-#             # TODO: find position of lat and long in list and replace dims[0] dims[1]
-#             lats = ds.variables[dims[0]][:]
-#             lons = ds.variables[dims[1]][:]
-#             ds.close()
-#             LOGGER.info('got coordinates without pole rotation')
-#         except Exception:
-#             msg = 'failed to extract coordinates'
-#             LOGGER.exception(msg)
-#     else:
-#         lats, lons = unrotate_pole(resource)
-#         LOGGER.info('got coordinates with pole rotation')
-#     return lats, lons
-#
+def get_coordinates(resource, variable=None, unrotate=False):
+    """
+    reads out the coordinates of a variable
+
+    :param resource: netCDF resource file
+    :param variable: variable name
+    :param unrotate: If True the coordinates will be returned for unrotated pole
+
+    :returns list, list: latitudes , longitudes
+    """
+    if type(resource) != list:
+        resource = [resource]
+
+    if variable is None:
+        variable = get_variable(resource)
+
+    if unrotate is False:
+        try:
+            if len(resource) > 1:
+                ds = MFDataset(resource)
+            else:
+                ds = Dataset(resource[0])
+
+            var = ds.variables[variable]
+            dims = list(var.dimensions)
+            if 'time' in dims: dims.remove('time')
+            # TODO: find position of lat and long in list and replace dims[0] dims[1]
+            lats = ds.variables[dims[0]][:]
+            lons = ds.variables[dims[1]][:]
+            ds.close()
+            LOGGER.info('got coordinates without pole rotation')
+        except Exception:
+            msg = 'failed to extract coordinates'
+            LOGGER.exception(msg)
+    else:
+        lats, lons = unrotate_pole(resource)
+        LOGGER.info('got coordinates with pole rotation')
+    return lats, lons
+
 #
 # def get_domain(resource):
 #     """
@@ -322,107 +326,107 @@ def sort_by_filename(resource, historical_concatination=False):
 #     return domain
 #
 #
-# def get_frequency(resource):
-#     """
-#     returns the frequency as set in the metadata (see also metadata.get_frequency)
-#
-#     :param resource: NetCDF file
-#
-#     :return str: frequency
-#     """
-#     ds = Dataset(resource)
-#
-#     try:
-#         frequency = ds.frequency
-#         LOGGER.info('frequency written in the meta data:  %s', frequency)
-#     except Exception as e:
-#         msg = "Could not specify frequency for %s" % (resource)
-#         LOGGER.exception(msg)
-#         raise Exception(msg)
-#     else:
-#         ds.close()
-#     return frequency
-#
-#
-# def get_index_lat(resource, variable=None):
-#     """
-#     returns the dimension index of the latiude values
-#
-#     :param resource:  list of path(s) to netCDF file(s) of one Dataset
-#     :param variable: variable name
-#
-#     :return int: index
-#     """
-#
-#     if variable is None:
-#         variable = get_variable(resource)
-#     if type(resource) != list:
-#         resource = [resource]
-#     if len(resource) == 1:
-#         ds = Dataset(resource[0])
-#     else:
-#         ds = MFDataset(resource)
-#
-#     var = ds.variables[variable]
-#     dims = list(var.dimensions)
-#
-#     if 'rlat' in dims:
-#         index = dims.index('rlat')
-#     if 'lat' in dims:
-#         index = dims.index('lat')
-#     if 'latitude' in dims:
-#         index = dims.index('latitude')
-#     if 'y' in dims:
-#         index = dims.index('y')
-#     return index
-#
-#
-# def get_timerange(resource):
-#     """
-#     returns from/to timestamp of given netcdf file(s).
-#
-#     :param resource: list of path(s) to netCDF file(s)
-#
-#     :returns netcdf.datetime.datetime: start, end
-#
-#     """
-#     start = end = None
-#
-#     if type(resource) != list:
-#         resource = [resource]
-#     LOGGER.debug('length of recources: %s files' % len(resource))
-#
-#     try:
-#         if len(resource) > 1:
-#             ds = MFDataset(resource)
-#             LOGGER.debug('MFDataset loaded for %s of files in resource:' % len(resource))
-#         else:
-#             ds = Dataset(resource[0])
-#             LOGGER.debug('Dataset loaded for %s file in resource:' % len(resource))
-#         time = ds.variables['time']
-#
-#         if (hasattr(time, 'units') and hasattr(time, 'calendar')) is True:
-#             s = num2date(time[0], time.units, time.calendar)
-#             e = num2date(time[-1], time.units, time.calendar)
-#         elif hasattr(time, 'units'):
-#             s = num2date(time[0], time.units)
-#             e = num2date(time[-1], time.units)
-#         else:
-#             s = num2date(time[0])
-#             e = num2date(time[-1])
-#
-#         # TODO: include frequency
-#         start = '%s%s%s' % (s.year, str(s.month).zfill(2), str(s.day).zfill(2))
-#         end = '%s%s%s' % (e.year, str(e.month).zfill(2), str(e.day).zfill(2))
-#         ds.close()
-#     except Exception:
-#         msg = 'failed to get time range'
-#         LOGGER.exception(msg)
-#         ds.close()
-#         raise Exception(msg)
-#     return start, end
-#
-#
+def get_frequency(resource):
+    """
+    returns the frequency as set in the metadata (see also metadata.get_frequency)
+
+    :param resource: NetCDF file
+
+    :return str: frequency
+    """
+    ds = Dataset(resource)
+
+    try:
+        frequency = ds.frequency
+        LOGGER.info('frequency written in the meta data:  %s', frequency)
+    except Exception as e:
+        msg = "Could not specify frequency for %s" % (resource)
+        LOGGER.exception(msg)
+        raise Exception(msg)
+    else:
+        ds.close()
+    return frequency
+
+
+def get_index_lat(resource, variable=None):
+    """
+    returns the dimension index of the latiude values
+
+    :param resource:  list of path(s) to netCDF file(s) of one Dataset
+    :param variable: variable name
+
+    :return int: index
+    """
+
+    if variable is None:
+        variable = get_variable(resource)
+    if type(resource) != list:
+        resource = [resource]
+    if len(resource) == 1:
+        ds = Dataset(resource[0])
+    else:
+        ds = MFDataset(resource)
+
+    var = ds.variables[variable]
+    dims = list(var.dimensions)
+
+    if 'rlat' in dims:
+        index = dims.index('rlat')
+    if 'lat' in dims:
+        index = dims.index('lat')
+    if 'latitude' in dims:
+        index = dims.index('latitude')
+    if 'y' in dims:
+        index = dims.index('y')
+    return index
+
+
+def get_timerange(resource):
+    """
+    returns from/to timestamp of given netcdf file(s).
+
+    :param resource: list of path(s) to netCDF file(s)
+
+    :returns netcdf.datetime.datetime: start, end
+
+    """
+    start = end = None
+
+    if type(resource) != list:
+        resource = [resource]
+    LOGGER.debug('length of recources: %s files' % len(resource))
+
+    try:
+        if len(resource) > 1:
+            ds = MFDataset(resource)
+            LOGGER.debug('MFDataset loaded for %s of files in resource:' % len(resource))
+        else:
+            ds = Dataset(resource[0])
+            LOGGER.debug('Dataset loaded for %s file in resource:' % len(resource))
+        time = ds.variables['time']
+
+        if (hasattr(time, 'units') and hasattr(time, 'calendar')) is True:
+            s = num2date(time[0], time.units, time.calendar)
+            e = num2date(time[-1], time.units, time.calendar)
+        elif hasattr(time, 'units'):
+            s = num2date(time[0], time.units)
+            e = num2date(time[-1], time.units)
+        else:
+            s = num2date(time[0])
+            e = num2date(time[-1])
+
+        # TODO: include frequency
+        start = '%s%s%s' % (s.year, str(s.month).zfill(2), str(s.day).zfill(2))
+        end = '%s%s%s' % (e.year, str(e.month).zfill(2), str(e.day).zfill(2))
+        ds.close()
+    except Exception:
+        msg = 'failed to get time range'
+        LOGGER.exception(msg)
+        ds.close()
+        raise Exception(msg)
+    return start, end
+
+
 def get_time(resource):
     """
     returns all timestamps of given netcdf file as datetime list.
@@ -500,7 +504,7 @@ def get_values(resource, variable=None):
     if variable is None:
         variable = get_variable(resource)
 
-    if isinstance(resource, basestring):
+    if isinstance(resource, str):
         ds = Dataset(resource)
     elif len(resource) == 1:
         ds = Dataset(resource)
@@ -609,26 +613,150 @@ def get_values(resource, variable=None):
 #     ds.close()
 #
 #     return lats, lons
-#
-#
-# def sort_by_time(resource):
-#     """
-#     Sort a list of files by their time variable.
-#
-#     :param resource: File path.
-#     :return: Sorted file list.
-#     """
-#     from ocgis.util.helpers import get_sorted_uris_by_time_dimension
-#
-#     if type(resource) == list and len(resource) > 1:
-#         sorted_list = get_sorted_uris_by_time_dimension(resource)
-#     elif type(resource) == str:
-#         sorted_list = [resource]
-#     else:
-#         sorted_list = resource
-#     return sorted_list
-#
-#
 
-#
-#
+
+def drs_filename(resource, skip_timestamp=False, skip_format=False,
+                 variable=None, rename_file=False, add_file_path=False):
+    """
+    generates filename according to the data reference syntax (DRS)
+    based on the metadata in the resource.
+    http://cmip-pcmdi.llnl.gov/cmip5/docs/cmip5_data_reference_syntax.pdf
+    https://pypi.python.org/pypi/drslib
+    :param add_file_path: if add_file_path=True, path to file will be added (default=False)
+    :param resource: netcdf file
+    :param skip_timestamp: if True then from/to timestamp != added to the filename
+                           (default: False)
+    :param variable: appropriate variable for filename, if not set (default), variable will
+                      be determined. For files with more than one data variable,
+                      the variable parameter has to be defined (default: )
+                      example: variable='tas'
+    :param rename_file: rename the file. (default: False)
+    :returns str: DRS filename
+    """
+    from os import path, rename
+
+    try:
+        ds = Dataset(resource)
+        if variable is None:
+            variable = get_variable(resource)
+        # CORDEX example: EUR-11_ICHEC-EC-EARTH_historical_r3i1p1_DMI-HIRHAM5_v1_day
+        cordex_pattern = "{variable}_{domain}_{driving_model}_{experiment}_{ensemble}_{model}_{version}_{frequency}"
+        # CMIP5 example: tas_MPI-ESM-LR_historical_r1i1p1
+        cmip5_pattern = "{variable}_{model}_{experiment}_{ensemble}"
+        filename = resource
+        if ds.project_id == 'CORDEX' or ds.project_id == 'EOBS':
+            filename = cordex_pattern.format(
+                variable=variable,
+                domain=ds.CORDEX_domain,
+                driving_model=ds.driving_model_id,
+                experiment=ds.experiment_id,
+                ensemble=ds.driving_model_ensemble_member,
+                model=ds.model_id,
+                version=ds.rcm_version_id,
+                frequency=ds.frequency)
+        elif ds.project_id == 'CMIP5':
+            # TODO: attributes missing in netcdf file for name generation?
+            filename = cmip5_pattern.format(
+                variable=variable,
+                model=ds.model_id,
+                experiment=ds.experiment,
+                ensemble=ds.parent_experiment_rip
+            )
+        else:
+            raise Exception('unknown project %s' % ds.project_id)
+        ds.close()
+    except Exception:
+        LOGGER.exception('Could not read metadata %s', resource)
+    try:
+        # add from/to timestamp if not skipped
+        if skip_timestamp is False:
+            LOGGER.debug("add timestamp")
+            from_timestamp, to_timestamp = get_timerange(resource)
+            LOGGER.debug("from_timestamp %s", from_timestamp)
+            filename = "%s_%s-%s" % (filename, int(from_timestamp), int(to_timestamp))
+
+        # add format extension
+        if skip_format is False:
+            filename = filename + '.nc'
+
+        pf = path.dirname(resource)
+        # add file path
+        if add_file_path is True:
+            filename = path.join(pf, filename)
+
+        # rename the file
+        if rename_file is True:
+            if path.exists(path.join(resource)):
+                rename(resource, path.join(pf, filename))
+    except Exception:
+        LOGGER.exception('Could not generate DRS filename for %s', resource)
+
+    return filename
+
+
+def aggregations(resource):
+    """
+    aggregates netcdf files by experiment. Aggregation examples:
+    CORDEX: EUR-11_ICHEC-EC-EARTH_historical_r3i1p1_DMI-HIRHAM5_v1_day
+    CMIP5:
+    We collect for each experiment all files on the time axis:
+    200101-200512, 200601-201012, ...
+    Time axis is sorted by time.
+    :param resource: list of netcdf files
+    :return: dictionary with key=experiment
+    """
+
+    aggregations = {}
+    for nc in resource:
+        key = drs_filename(nc, skip_timestamp=True, skip_format=True)
+
+        # collect files of each aggregation (time axis)
+        if key in aggregations:
+            aggregations[key]['files'].append(nc)
+        else:
+            aggregations[key] = dict(files=[nc])
+
+    # collect aggregation metadata
+    for key in aggregations.keys():
+        # sort files by time
+        aggregations[key]['files'] = sort_by_time(aggregations[key]['files'])
+        # start timestamp of first file
+        start, _ = get_timerange(aggregations[key]['files'][0])
+        # end timestamp of last file
+        _, end = get_timerange(aggregations[key]['files'][-1])
+        aggregations[key]['from_timestamp'] = start
+        aggregations[key]['to_timestamp'] = end
+        aggregations[key]['start_year'] = int(start[0:4])
+        aggregations[key]['end_year'] = int(end[0:4])
+        aggregations[key]['variable'] = get_variable(aggregations[key]['files'][0])
+        aggregations[key]['filename'] = "%s_%s-%s.nc" % (key, start, end)
+    return aggregations
+
+
+def has_variable(resource, variable):
+    success = False
+    try:
+        rd = RequestDataset(uri=resource)
+        success = rd.variable == variable
+    except Exception:
+        LOGGER.exception('has_variable failed.')
+        raise
+    return success
+
+
+def sort_by_time(resource):
+    """
+    Sort a list of files by their time variable.
+
+    :param resource: File path.
+    :return: Sorted file list.
+    """
+    from ocgis.util.helpers import get_sorted_uris_by_time_dimension
+
+    if type(resource) == list and len(resource) > 1:
+        sorted_list = get_sorted_uris_by_time_dimension(resource)
+    elif type(resource) == str:
+        sorted_list = [resource]
+    else:
+        sorted_list = resource
+    return sorted_list

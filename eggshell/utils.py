@@ -2,13 +2,13 @@
 
 """Utitility functions."""
 
-
 import os
 import tempfile
 import tarfile
 import zipfile
 import requests
 import shutil
+
 from urllib.parse import urlparse
 
 import logging
@@ -75,6 +75,11 @@ def download_file(url, out=None, verify=False):
     with open(local_filename, 'wb') as fp:
         shutil.copyfileobj(r.raw, fp)
     return local_filename
+
+
+def local_path(url):
+    url_parts = urlparse(url)
+    return url_parts.path
 
 
 def download(url, cache=False):

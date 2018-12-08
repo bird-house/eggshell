@@ -7,7 +7,7 @@ outputs are stored. To make sure all birds use the same architecture, eggshell p
 with this.
 """
 
-import os
+from os.path import join, pardir, abspath
 from pywps import configuration
 import logging
 LOGGER = logging.getLogger("PYWPS")
@@ -20,7 +20,27 @@ class Paths(object):
 
         :param module: Imported module relative to which paths will be defined.
         """
-        self._base = module.__path__[0]
+        self._base = module.__path__[0]  # _base is not the top level
+
+    @property
+    def top_level(self):
+        """ return the top level directory of a WPS bird """
+        return abspath(join(self._base, pardir))
+
+    @property
+    def data(self):
+        """Return the path to the data directory."""
+        return join(self.top_level, 'data')
+
+    @property
+    def shapefiles(self):
+        """Return the path to the geographic data directory."""
+        return join(self.data, 'shapefiles')
+
+    @property
+    def testdata(self):
+        """Return the path to the test data directory."""
+        return join(self.top_level, 'tests/testdata')
 
     @property
     def cache(self):
@@ -28,19 +48,8 @@ class Paths(object):
         out = configuration.get_config_value("cache", "cache_path")
         if not out:
             LOGGER.warn("No cache path configured. Using default value.")
-            out = os.path.join(configuration.get_config_value("server", "outputpath"), "cache")
+            out = join(configuration.get_config_value("server", "outputpath"), "cache")
         return out
-
-    @property
-    def data(self):
-        """Return the path to the data directory."""
-        return os.path.join(self._base, 'data')
-
-    @property
-    def masks(self):
-        """Return the path to the masks directory."""
-        # TODO: currently this folder is not used
-        return os.path.join(self.data, 'masks')
 
     @property
     def outputpath(self):
@@ -52,25 +61,21 @@ class Paths(object):
         """Return the server URL for process outputs."""
         return configuration.get_config_value("server", "outputurl").rstrip('/')
 
-    @property
-    def Rsrc_dir(self):
-        """Return the path to the R source directory."""
-        return os.path.join(self._base, 'Rsrc')
+    # @property
+    # def masks(self):
+    #     """Return the path to the masks directory."""
+    #     # TODO: currently this folder is not used
+    #     return join(self.data, 'masks')
 
-    @property
-    def shapefiles(self):
-        """Return the path to the geographic data directory."""
-        return os.path.join(self.data, 'shapefiles')
-
-    @property
-    def static(self):
-        """Return the path to the static content directory."""
-        return os.path.join(self._base, 'static')
-
-    @property
-    def testdata(self):
-        """Return the path to the test data directory."""
-        return os.path.join(self._base, 'tests/testdata')
+    # @property
+    # def Rsrc_dir(self):
+    #     """Return the path to the R source directory."""
+    #     return os.path.join(self._base, 'Rsrc')
+    #
+    # @property
+    # def static(self):
+    #     """Return the path to the static content directory."""
+    #     return os.path.join(self._base, 'static')
 
 
 # Should these go into the class or they're too specialized ?

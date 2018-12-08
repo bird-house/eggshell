@@ -333,67 +333,67 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
       # output
 
 
-# def calc_grouping(grouping):
-#     """
-#     translate time grouping abbreviation (e.g 'JJA') into the appropriate ocgis calc_grouping syntax
-#
-#     :param grouping: time group abbreviation allowed values: "yr", "mon", "sem",
-#                      "ONDJFM", "AMJJAS", "DJF", "MAM", "JJA", "SON"
-#
-#     :returns list: calc_grouping conformant to ocgis syntax
-#     """
-#     calc_grouping = ['year']  # default year
-#     if grouping == 'yr':
-#         calc_grouping = ['year']
-#     elif grouping == 'sem':
-#         calc_grouping = [[12, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11], 'unique']
-#     elif grouping == 'ONDJFM':
-#         calc_grouping = [[10, 11, 12, 1, 2, 3], 'unique']
-#     elif grouping == 'AMJJAS':
-#         calc_grouping = [[4, 5, 6, 7, 8, 9], 'unique']
-#     elif grouping == 'DJF':
-#         calc_grouping = [[12, 1, 2], 'unique']
-#     elif grouping == 'MAM':
-#         calc_grouping = [[3, 4, 5], 'unique']
-#     elif grouping == 'JJA':
-#         calc_grouping = [[6, 7, 8], 'unique']
-#     elif grouping == 'SON':
-#         calc_grouping = [[9, 10, 11], 'unique']
-#     elif grouping == 'day':
-#         calc_grouping = ['year', 'month', 'day']
-#     elif grouping == 'mon':
-#         calc_grouping = ['year', 'month']
-#     elif grouping == 'Jan':
-#         calc_grouping = [[1], 'unique']
-#     elif grouping == 'Feb':
-#         calc_grouping = [[2], 'unique']
-#     elif grouping == 'Mar':
-#         calc_grouping = [[3], 'unique']
-#     elif grouping == 'Apr':
-#         calc_grouping = [[4], 'unique']
-#     elif grouping == 'May':
-#         calc_grouping = [[5], 'unique']
-#     elif grouping == 'Jun':
-#         calc_grouping = [[6], 'unique']
-#     elif grouping == 'Jul':
-#         calc_grouping = [[7], 'unique']
-#     elif grouping == 'Aug':
-#         calc_grouping = [[8], 'unique']
-#     elif grouping == 'Sep':
-#         calc_grouping = [[9], 'unique']
-#     elif grouping == 'Oct':
-#         calc_grouping = [[10], 'unique']
-#     elif grouping == 'Nov':
-#         calc_grouping = [[11], 'unique']
-#     elif grouping == 'Dec':
-#         calc_grouping = [[12], 'unique']
-#     elif grouping in ['year', 'month']:
-#         calc_grouping = [grouping]
-#     else:
-#         msg = 'Unknown calculation grouping: %s' % grouping
-#         LOGGER.debug(msg)
-#         raise Exception(msg)
-#     return calc_grouping
+def calc_grouping(grouping):
+    """
+    translate time grouping abbreviation (e.g 'JJA') into the appropriate ocgis calc_grouping syntax
+
+    :param grouping: time group abbreviation allowed values: "yr", "mon", "sem",
+                     "ONDJFM", "AMJJAS", "DJF", "MAM", "JJA", "SON"
+
+    :returns list: calc_grouping conformant to ocgis syntax
+    """
+    calc_grouping = ['year']  # default year
+    if grouping == 'yr':
+        calc_grouping = ['year']
+    elif grouping == 'sem':
+        calc_grouping = [[12, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11], 'unique']
+    elif grouping == 'ONDJFM':
+        calc_grouping = [[10, 11, 12, 1, 2, 3], 'unique']
+    elif grouping == 'AMJJAS':
+        calc_grouping = [[4, 5, 6, 7, 8, 9], 'unique']
+    elif grouping == 'DJF':
+        calc_grouping = [[12, 1, 2], 'unique']
+    elif grouping == 'MAM':
+        calc_grouping = [[3, 4, 5], 'unique']
+    elif grouping == 'JJA':
+        calc_grouping = [[6, 7, 8], 'unique']
+    elif grouping == 'SON':
+        calc_grouping = [[9, 10, 11], 'unique']
+    elif grouping == 'day':
+        calc_grouping = ['year', 'month', 'day']
+    elif grouping == 'mon':
+        calc_grouping = ['year', 'month']
+    elif grouping == 'Jan':
+        calc_grouping = [[1], 'unique']
+    elif grouping == 'Feb':
+        calc_grouping = [[2], 'unique']
+    elif grouping == 'Mar':
+        calc_grouping = [[3], 'unique']
+    elif grouping == 'Apr':
+        calc_grouping = [[4], 'unique']
+    elif grouping == 'May':
+        calc_grouping = [[5], 'unique']
+    elif grouping == 'Jun':
+        calc_grouping = [[6], 'unique']
+    elif grouping == 'Jul':
+        calc_grouping = [[7], 'unique']
+    elif grouping == 'Aug':
+        calc_grouping = [[8], 'unique']
+    elif grouping == 'Sep':
+        calc_grouping = [[9], 'unique']
+    elif grouping == 'Oct':
+        calc_grouping = [[10], 'unique']
+    elif grouping == 'Nov':
+        calc_grouping = [[11], 'unique']
+    elif grouping == 'Dec':
+        calc_grouping = [[12], 'unique']
+    elif grouping in ['year', 'month']:
+        calc_grouping = [grouping]
+    else:
+        msg = 'Unknown calculation grouping: %s' % grouping
+        LOGGER.debug(msg)
+        raise Exception(msg)
+    return calc_grouping
 
 # def has_variable(resource, variable):
 #     """Check if resource has variable.
