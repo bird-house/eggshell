@@ -71,23 +71,16 @@ def opendap_or_download(resource, auth_tkt_cookie={}, output_path=None,
         try:
             nc = Dataset(output_file, 'r')
             nc.close()
-        except:
+        except Exception:
             raise IOError("This does not appear to be a valid NetCDF file.")
         return output_file
     return resource
 
 
 def get_variable(resource):
-    """
-    detects processable variable name in netCDF file
-    based on ocgis (compare guess_main_variables)
-
-    :param resource: filepath sting or sorted list for netcdf file(s)
-
-    :returns str: variable name
-    """
-    rds = RequestDataset(resource)
-    return rds.variable
+    """ Moved to ocg_utils"""
+    from eggshell.nc.ocg_utils import get_variable as gv
+    return gv(resource)
 
 
 def guess_main_variables(ncdataset):

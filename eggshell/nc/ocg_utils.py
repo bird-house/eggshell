@@ -84,10 +84,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     import uuid
 
     # prepare the environment
-    env.DIR_SHPCABINET = paths.shapefiles
     env.OVERWRITE = True
-    # env.DIR_OUTPUT = dir_output
-    # LOGGER.debug(' **** env.DIR_OUTPUT  = %s ' % env.DIR_OUTPUT)
 
     if dir_output is None:
         dir_output = abspath(curdir)
@@ -394,6 +391,20 @@ def calc_grouping(grouping):
         LOGGER.debug(msg)
         raise Exception(msg)
     return calc_grouping
+
+
+def get_variable(resource):
+    """
+    detects processable variable name in netCDF file
+    based on ocgis (compare guess_main_variables)
+
+    :param resource: filepath sting or sorted list for netcdf file(s)
+
+    :returns str: variable name
+    """
+    rds = RequestDataset(resource)
+    return rds.variable
+
 
 # def has_variable(resource, variable):
 #     """Check if resource has variable.

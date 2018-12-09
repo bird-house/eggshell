@@ -30,7 +30,7 @@ class Paths(object):
     @property
     def data(self):
         """Return the path to the data directory."""
-        return join(self.top_level, 'data')
+        return join(self._base, 'data')
 
     @property
     def shapefiles(self):
