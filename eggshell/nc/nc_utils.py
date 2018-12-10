@@ -3,6 +3,9 @@ from ocgis import RequestDataset
 from datetime import datetime as dt
 import time
 import logging
+import os
+import requests
+
 LOGGER = logging.getLogger("PYWPS")
 #from esgf_utils import ATTRIBUTE_TO_FACETS_MAP
 
@@ -38,6 +41,14 @@ class CookieNetCDFTransfer:
         if self.cookie:
             os.remove(self.daprc_fn)
             os.remove(self.auth_cookie_fn)
+
+
+def get_auth_cookie(pywps_request):
+    try:
+        return dict(auth_tkt=pywps_request.http_request.cookies['auth_tkt'])
+    except KeyError:
+        # No token... will be anonymous
+        return None
 
 
 def opendap_or_download(resource, auth_tkt_cookie={}, output_path=None,
