@@ -1,6 +1,8 @@
 from netCDF4 import Dataset, MFDataset, num2date
 from ocgis import RequestDataset
 from datetime import datetime as dt
+#TODO: change to nc_utils guess_main_variables
+from eggshell.nc.ocg_utils import get_variable
 import time
 import logging
 import os
@@ -41,6 +43,45 @@ class CookieNetCDFTransfer:
         if self.cookie:
             os.remove(self.daprc_fn)
             os.remove(self.auth_cookie_fn)
+
+
+def aggregations(resource):
+    """
+    aggregates netcdf files by experiment. Aggregation examples:
+    CORDEX: EUR-11_ICHEC-EC-EARTH_historical_r3i1p1_DMI-HIRHAM5_v1_day
+    CMIP5:
+    We collect for each experiment all files on the time axis:
+    200101-200512, 200601-201012, ...
+    Time axis is sorted by time.
+    :param resource: list of netcdf files
+    :return: dictionary with key=experiment
+    """
+    from .nc_utils import drs_filename, sort_by_time
+    aggregations = {}
+    for nc in resource:
+        key = drs_filename(nc, skip_timestamp=True, skip_format=True)
+
+        # collect files of each aggregation (time axis)
+        if key in aggregations:
+            aggregations[key]['files'].append(nc)
+        else:
+            aggregations[key] = dict(files=[nc])
+
+    # collect aggregation metadata
+    for key in aggregations.keys():
+        # sort files by time
+        aggregations[key]['files'] = sort_by_time(aggregations[key]['files'])
+        # start timestamp of first file
+        start, _ = get_timerange(aggregations[key]['files'][0])
+        # end timestamp of last file
+        _, end = get_timerange(aggregations[key]['files'][-1])
+        aggregations[key]['from_timestamp'] = start
+        aggregations[key]['to_timestamp'] = end
+        aggregations[key]['start_year'] = int(start[0:4])
+        aggregations[key]['end_year'] = int(end[0:4])
+        aggregations[key]['variable'] = get_variable(aggregations[key]['files'][0])
+        aggregations[key]['filename'] = "%s_%s-%s.nc" % (key, start, end)
+    return aggregations
 
 
 def get_auth_cookie(pywps_request):
@@ -88,17 +129,80 @@ def opendap_or_download(resource, auth_tkt_cookie={}, output_path=None,
     return resource
 
 
-def get_variable(resource):
-    """ Moved to ocg_utils"""
-    from eggshell.nc.ocg_utils import get_variable as gv
-    return gv(resource)
+def get_coordinates(resource, variable=None, unrotate=False):
+    """
+    reads out the coordinates of a variable
+    :param resource: netCDF resource file
+    :param variable: variable name
+    :param unrotate: If True the coordinates will be returned for unrotated pole
+    :returns list, list: latitudes , longitudes
+    """
+    if type(resource) != list:
+        resource = [resource]
+
+    if variable is None:
+        variable = get_variable(resource)
+
+    if unrotate is False:
+        try:
+            if len(resource) > 1:
+                ds = MFDataset(resource)
+            else:
+                ds = Dataset(resource[0])
+
+            var = ds.variables[variable]
+            dims = list(var.dimensions)
+            if 'time' in dims: dims.remove('time')
+            # TODO: find position of lat and long in list and replace dims[0] dims[1]
+            lats = ds.variables[dims[0]][:]
+            lons = ds.variables[dims[1]][:]
+            ds.close()
+            LOGGER.info('got coordinates without pole rotation')
+        except Exception:
+            msg = 'failed to extract coordinates'
+            LOGGER.exception(msg)
+    else:
+        lats, lons = unrotate_pole(resource)
+        LOGGER.info('got coordinates with pole rotation')
+    return lats, lons
 
 
-def guess_main_variables(ncdataset):
+def get_index_lat(resource, variable=None):
+    """
+    returns the dimension index of the latiude values
+    :param resource:  list of path(s) to netCDF file(s) of one Dataset
+    :param variable: variable name
+    :return int: index
+    """
+
+    if variable is None:
+        variable = get_variable(resource)
+    if type(resource) != list:
+        resource = [resource]
+    if len(resource) == 1:
+        ds = Dataset(resource[0])
+    else:
+        ds = MFDataset(resource)
+
+    var = ds.variables[variable]
+    dims = list(var.dimensions)
+
+    if 'rlat' in dims:
+        index = dims.index('rlat')
+    if 'lat' in dims:
+        index = dims.index('lat')
+    if 'latitude' in dims:
+        index = dims.index('latitude')
+    if 'y' in dims:
+        index = dims.index('y')
+    return index
+
+
+def guess_main_variables(resources):
     """Guess main variables in a NetCDF file.
-    (compare get_variable)
+    (compare nc.ocg_utils.get_variable)
 
-    :param ncdataset: netCDF4.Dataset
+    :param resources: netCDF4.Dataset
 
     :return list: names of main variables
 
@@ -108,6 +212,13 @@ def guess_main_variables(ncdataset):
     time, lon, lat variables and variables that are defined as bounds are
     automatically ignored.
     """
+
+    if type(resources) == str:
+        ncdataset = Dataset(resources)
+    elif type(resources) == list:
+        ncdataset = MFDataset(resources)
+    else:
+        ncdataset = resources
 
     var_candidates = []
     bnds_variables = []
@@ -264,46 +375,6 @@ def sort_by_filename(resource, historical_concatination=False):
 #     else:
 #         calendar = None
 #     return str(calendar), str(unit)
-#
-#
-def get_coordinates(resource, variable=None, unrotate=False):
-    """
-    reads out the coordinates of a variable
-
-    :param resource: netCDF resource file
-    :param variable: variable name
-    :param unrotate: If True the coordinates will be returned for unrotated pole
-
-    :returns list, list: latitudes , longitudes
-    """
-    if type(resource) != list:
-        resource = [resource]
-
-    if variable is None:
-        variable = get_variable(resource)
-
-    if unrotate is False:
-        try:
-            if len(resource) > 1:
-                ds = MFDataset(resource)
-            else:
-                ds = Dataset(resource[0])
-
-            var = ds.variables[variable]
-            dims = list(var.dimensions)
-            if 'time' in dims: dims.remove('time')
-            # TODO: find position of lat and long in list and replace dims[0] dims[1]
-            lats = ds.variables[dims[0]][:]
-            lons = ds.variables[dims[1]][:]
-            ds.close()
-            LOGGER.info('got coordinates without pole rotation')
-        except Exception:
-            msg = 'failed to extract coordinates'
-            LOGGER.exception(msg)
-    else:
-        lats, lons = unrotate_pole(resource)
-        LOGGER.info('got coordinates with pole rotation')
-    return lats, lons
 
 #
 # def get_domain(resource):
@@ -364,6 +435,7 @@ def get_index_lat(resource, variable=None):
 
     if variable is None:
         variable = get_variable(resource)
+
     if type(resource) != list:
         resource = [resource]
     if len(resource) == 1:
@@ -696,56 +768,6 @@ def drs_filename(resource, skip_timestamp=False, skip_format=False,
         LOGGER.exception('Could not generate DRS filename for %s', resource)
 
     return filename
-
-
-def aggregations(resource):
-    """
-    aggregates netcdf files by experiment. Aggregation examples:
-    CORDEX: EUR-11_ICHEC-EC-EARTH_historical_r3i1p1_DMI-HIRHAM5_v1_day
-    CMIP5:
-    We collect for each experiment all files on the time axis:
-    200101-200512, 200601-201012, ...
-    Time axis is sorted by time.
-    :param resource: list of netcdf files
-    :return: dictionary with key=experiment
-    """
-
-    aggregations = {}
-    for nc in resource:
-        key = drs_filename(nc, skip_timestamp=True, skip_format=True)
-
-        # collect files of each aggregation (time axis)
-        if key in aggregations:
-            aggregations[key]['files'].append(nc)
-        else:
-            aggregations[key] = dict(files=[nc])
-
-    # collect aggregation metadata
-    for key in aggregations.keys():
-        # sort files by time
-        aggregations[key]['files'] = sort_by_time(aggregations[key]['files'])
-        # start timestamp of first file
-        start, _ = get_timerange(aggregations[key]['files'][0])
-        # end timestamp of last file
-        _, end = get_timerange(aggregations[key]['files'][-1])
-        aggregations[key]['from_timestamp'] = start
-        aggregations[key]['to_timestamp'] = end
-        aggregations[key]['start_year'] = int(start[0:4])
-        aggregations[key]['end_year'] = int(end[0:4])
-        aggregations[key]['variable'] = get_variable(aggregations[key]['files'][0])
-        aggregations[key]['filename'] = "%s_%s-%s.nc" % (key, start, end)
-    return aggregations
-
-
-def has_variable(resource, variable):
-    success = False
-    try:
-        rd = RequestDataset(uri=resource)
-        success = rd.variable == variable
-    except Exception:
-        LOGGER.exception('has_variable failed.')
-        raise
-    return success
 
 
 def sort_by_time(resource):

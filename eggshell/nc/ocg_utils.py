@@ -206,7 +206,6 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
         return None
     return geom_file
 
-
     # try:
     #     from numpy import sqrt
     #     from flyingpigeon.utils import FreeMemory
@@ -406,18 +405,12 @@ def get_variable(resource):
     return rds.variable
 
 
-# def has_variable(resource, variable):
-#     """Check if resource has variable.
-#
-#     :param resource: netCDF file.
-#     :param str variable: Name of variable.
-#     :return bool: Whether resource has variable or not.
-#     """
-#     success = False
-#     try:
-#         rd = RequestDataset(uri=resource)
-#         success = rd.variable == variable
-#     except Exception:
-#         LOGGER.exception('has_variable failed.')
-#         raise
-#     return success
+def has_variable(resource, variable):
+    success = False
+    try:
+        rd = RequestDataset(uri=resource)
+        success = rd.variable == variable
+    except Exception:
+        LOGGER.exception('has_variable failed.')
+        raise
+    return success
