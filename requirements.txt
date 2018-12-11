@@ -1,1 +1,3 @@
 six
+netCDF4
+requests
