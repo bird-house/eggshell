@@ -5,18 +5,20 @@
 import os
 import tempfile
 import tarfile
-import zipfile
 import requests
 import shutil
 
+from netCDF4 import Dataset, MFDataset
+from re import search
 from urllib.parse import urlparse
+from zipfile import ZipFile
 
 import logging
 
 LOGGER = logging.getLogger("EGGSHELL")
 
 
-def archive(resources, format=None, output_dir=None, mode=None):
+def archive(resources, format='tar', output_dir=None, mode=None):
     """
     Compresses a list of files into an archive.
 
@@ -36,7 +38,6 @@ def archive(resources, format=None, output_dir=None, mode=None):
 
     :return str: archive path/filname.ext
     """
-    format = format or 'tar'
     output_dir = output_dir or tempfile.gettempdir()
     mode = mode or 'w'
 
@@ -50,20 +51,20 @@ def archive(resources, format=None, output_dir=None, mode=None):
         resources = list([resources])
     resources = [x for x in resources if x is not None]
 
-    _, archive = tempfile.mkstemp(dir=output_dir, suffix='.{}'.format(format))
+    _, arch = tempfile.mkstemp(dir=output_dir, suffix='.{}'.format(format))
 
     try:
         if format == 'tar':
-            with tarfile.open(archive, mode) as tar:
+            with tarfile.open(arch, mode) as tar:
                 for f in resources:
                     tar.add(f, arcname=os.path.basename(f))
         elif format == 'zip':
-            with zipfile.ZipFile(archive, mode=mode) as zf:
+            with ZipFile(arch, mode=mode) as zf:
                 for f in resources:
                     zf.write(f, os.path.basename(f))
     except Exception as e:
         raise Exception('failed to create {} archive: {}'.format(format, e))
-    return archive
+    return arch
 
 
 def download_file(url, out=None, verify=False):
@@ -91,6 +92,7 @@ def download(url, cache=False):
 
     :return str: filename
     """
+    filename = ''
     try:
         if cache:
             parsed_url = urlparse(url)
@@ -98,21 +100,23 @@ def download(url, cache=False):
             if os.path.exists(filename):
                 LOGGER.info('file already in cache: %s', os.path.basename(filename))
                 if check_creationtime(filename, url):
-                    LOGGER.info('file in cache older than archive file, downloading: %s ', os.path.basename(filename))
+                    msg = 'file in cache older than archive file, downloading: {}'.format(os.path.basename(filename))
+                    LOGGER.info(msg)
                     os.remove(filename)
                     filename = download_file(url, out=filename)
             else:
                 if not os.path.exists(os.path.dirname(filename)):
                     os.makedirs(os.path.dirname(filename))
-                LOGGER.info('downloading: %s', url)
+                LOGGER.info('downloading: {}'.format(url))
                 filename = download_file(url, out=filename)
                 # make softlink to current dir
                 # os.symlink(filename, os.path.basename(filename))
                 # filename = os.path.basename(filename)
         else:
             filename = download_file(url)
-    except Exception:
-        LOGGER.exception('failed to download data')
+    except Exception as e:
+        msg = 'failed to download data: {}'.format(e)
+        LOGGER.exception(msg)
     return filename
 
 
@@ -132,26 +136,27 @@ def extract_archive(resources, output_dir=None):
         resources = list([resources])
     files = []
 
-    for archive in resources:
+    for arch in resources:
         try:
-            LOGGER.debug("archive=%s", archive)
-            ext = os.path.basename(archive).split('.')[-1]
+            LOGGER.debug("archive=%s", arch)
+            ext = os.path.basename(arch).split('.')[-1]
 
             if ext == 'nc':
-                files.append(os.path.join(output_dir, archive))
+                files.append(os.path.join(output_dir, arch))
             elif ext == 'tar':
-                with tarfile.open(archive, mode='r') as tar:
+                with tarfile.open(arch, mode='r') as tar:
                     tar.extractall()
                     files.extend([os.path.join(output_dir, f) for f in tar.getnames()])
             elif ext == 'zip':
-                with zipfile.open(archive, mode='r') as zf:
+                with ZipFile(arch, mode='r') as zf:
                     zf.extractall()
                     files.extend([os.path.join(output_dir, f) for f in zf.filelist])
             else:
-                LOGGER.warn('file extention {} unknown'.format(ext))
-        except Exception:
-            LOGGER.error('failed to extract sub archive {}'.format(archive))
+                LOGGER.warning('file extention {} unknown'.format(ext))
+        except Exception as e:
+            LOGGER.error('failed to extract sub archive {}: {}'.format(arch, e))
     return files
+
 
 def get_coordinates(resource, variable=None, unrotate=False):
     """
@@ -178,15 +183,16 @@ def get_coordinates(resource, variable=None, unrotate=False):
 
             var = ds.variables[variable]
             dims = list(var.dimensions)
-            if 'time' in dims: dims.remove('time')
+            if 'time' in dims:
+                dims.remove('time')
             # TODO: find position of lat and long in list and replace dims[0] dims[1]
             lats = ds.variables[dims[0]][:]
             lons = ds.variables[dims[1]][:]
             ds.close()
             LOGGER.info('got coordinates without pole rotation')
-        except Exception:
-            msg = 'failed to extract coordinates'
-            LOGGER.exception(msg)
+        except Exception as e:
+            msg = 'failed to extract coordinates: {}'.format(e)
+            raise Exception(msg)
     else:
         lats, lons = unrotate_pole(resource)
         LOGGER.info('got coordinates with pole rotation')
@@ -203,3 +209,25 @@ def rename_complexinputs(complexinputs):
         os.rename(inpt.file, new_name)
         resources.append(os.path.abspath(new_name))
     return resources
+
+
+def address_append(address):
+    """
+    Formats a URL/URI to be more easily read with libraries such as "rasterstats"
+
+    :param address: URL/URI to a potential zip or tar file
+    :return: URL/URI prefixed for archive type
+    """
+    zipped = search(r'(\.zip)', address)
+    tarred = search(r'(\.tar)', address)
+
+    try:
+        if zipped:
+            return 'zip://{}'.format(address)
+        elif tarred:
+            return 'tar://{}'.format(address)
+        else:
+            return address
+    except Exception as e:
+        msg = 'Failed to prefix or parse URL: {}'.format(e)
+        raise Exception(msg)
