@@ -2,7 +2,7 @@ from netCDF4 import Dataset, MFDataset, num2date
 from ocgis import RequestDataset
 from datetime import datetime as dt
 #TODO: change to nc_utils guess_main_variables
-from eggshell.nc.ocg_utils import get_variable
+# from eggshell.nc.ocg_utils import get_variable
 import time
 import logging
 import os
@@ -198,7 +198,7 @@ def get_index_lat(resource, variable=None):
     return index
 
 
-def guess_main_variables(resources):
+def get_variable(resources):
     """Guess main variables in a NetCDF file.
     (compare nc.ocg_utils.get_variable)
 
@@ -220,33 +220,47 @@ def guess_main_variables(resources):
     else:
         ncdataset = resources
 
-    var_candidates = []
-    bnds_variables = []
-    for var_name in ncdataset.variables:
-        if var_name in ['time', 'lon', 'lat']:
-            continue
-        ncvar = ncdataset.variables[var_name]
-        if hasattr(ncvar, 'bounds'):
-            bnds_variables.append(ncvar.bounds)
-        var_candidates.append(var_name)
-    var_candidates = list(set(var_candidates) - set(bnds_variables))
+    dims = [key for key in ncdataset.dimensions.keys()]
+    vars = [key for key in ncdataset.variables.keys()]
 
-    # Find main variables among the candidates
-    nd = -1
-    size = -1
-    main_variables = []
-    for var_name in var_candidates:
-        ncvar = ncdataset.variables[var_name]
-        if len(ncvar.shape) > nd:
-            main_variables = [var_name]
-            nd = len(ncvar.shape)
-            size = ncvar.size
-        elif (len(ncvar.shape) == nd) and (ncvar.size > size):
-            main_variables = [var_name]
-            size = ncvar.size
-        elif (len(ncvar.shape) == nd) and (ncvar.size == size):
-            main_variables.append(var_name)
-    return main_variables
+    # assume that main variables are 3D or 4D
+    main_vars = []
+    for var in vars:
+        if len(ncdataset.variables[var].dimensions) >= 3:
+            main_vars.append(var)
+    if len(main_vars) > 1:
+        logger.exception('more than one 3D or 4D variable in file')
+    if len(main_vars) == 0:
+        logger.exception('No 3D or 4D variable detected')
+    return main_vars[0]
+
+    # var_candidates = []
+    # bnds_variables = []
+    # for var_name in ncdataset.variables:
+    #     if var_name in ['time', 'lon', 'lat']:
+    #         continue
+    #     ncvar = ncdataset.variables[var_name]
+    #     if hasattr(ncvar, 'bounds'):
+    #         bnds_variables.append(ncvar.bounds)
+    #     var_candidates.append(var_name)
+    # var_candidates = list(set(var_candidates) - set(bnds_variables))
+    #
+    # # Find main variables among the candidates
+    # nd = -1
+    # size = -1
+    # main_variables = []
+    # for var_name in var_candidates:
+    #     ncvar = ncdataset.variables[var_name]
+    #     if len(ncvar.shape) > nd:
+    #         main_variables = [var_name]
+    #         nd = len(ncvar.shape)
+    #         size = ncvar.size
+    #     elif (len(ncvar.shape) == nd) and (ncvar.size > size):
+    #         main_variables = [var_name]
+    #         size = ncvar.size
+    #     elif (len(ncvar.shape) == nd) and (ncvar.size == size):
+    #         main_variables.append(var_name)
+    # return main_variables
 
 
 def sort_by_filename(resource, historical_concatination=False):
