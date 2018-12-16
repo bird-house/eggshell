@@ -1,10 +1,10 @@
-    # from snappy import ProductIO
-    # from snappy import ProductUtils
-    # from snappy import ProgressMonitor
-    # from snappy import jpy
-    #
-    # from os.path import splitext, basename
-    # from os.path import join
+# from snappy import ProductIO
+# from snappy import ProductUtils
+# from snappy import ProgressMonitor
+# from snappy import jpy
+#
+# from os.path import splitext, basename
+# from os.path import join
 
 
 def plot_products(products, extend=[10, 20, 5, 15]):
@@ -21,7 +21,6 @@ def plot_products(products, extend=[10, 20, 5, 15]):
     from matplotlib.collections import PatchCollection
     import cartopy.crs as ccrs
     import re
-
 
     try:
         fig = plt.figure(dpi=90, facecolor='w', edgecolor='k')

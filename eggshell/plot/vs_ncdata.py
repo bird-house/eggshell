@@ -1,3 +1,0 @@
-"""
-visualization of netCDF data 
-"""
