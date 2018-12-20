@@ -17,11 +17,13 @@ from matplotlib.collections import PatchCollection
 
 from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
-
+from os.path import abspath
 LOGGER = logging.getLogger("PYWPS")
 
+work_dir = abspath(self.workdir)
 
-def fig2plot(fig, file_extension='png', output_dir='.', bbox_inches='tight', dpi=300, facecolor='w', edgecolor='k', figsize=(20, 10)):
+
+def fig2plot(fig, file_extension='png', output_dir=work_dir, bbox_inches='tight', dpi=300, facecolor='w', edgecolor='k', figsize=(20, 10)):
     '''saving a matplotlib figure to a graphic
 
     :param fig: matplotlib figure object
@@ -119,6 +121,7 @@ def concat_images(images, orientation='v'):
 
     LOGGER.debug('Images to be concatinated: %s' % images)
 
+
     if len(images) > 1:
         try:
             images_existing = [img for img in images if os.path.exists(img)]
@@ -149,11 +152,11 @@ def concat_images(images, orientation='v'):
                     box = [cp, 0, cw+cp, ch]
                     result.paste(oi, box=box)
 
-            ip, image = mkstemp(dir='.', suffix='.png')
+            ip, image = mkstemp(dir=work_dir, suffix='.png')
             result.save(image)
         except:
             LOGGER.exception('failed to concat images')
-            _, image = mkstemp(dir='.', suffix='.png')
+            _, image = mkstemp(dir=work_dir, suffix='.png')
             result = Image.new("RGB", (50, 50))
             result.save(image)
     elif len(images) == 1:
@@ -181,10 +184,10 @@ def pdfmerge(pdfs):
         merger = PdfFileMerger()
         for pdf in pdfs:
             merger.append(pdf)
-        _, mergedpdf = mkstemp(dir='.', suffix='.pdf')
+        _, mergedpdf = mkstemp(dir=work_dir, suffix='.pdf')
         merger.write(mergedpdf)
     except:
         LOGGER.excetion('failed to merge pdfs')
-        _, mergedpdf = mkstemp(dir='.', suffix='.pdf')
+        _, mergedpdf = mkstemp(dir=work_dir, suffix='.pdf')
 
     return mergedpdf
