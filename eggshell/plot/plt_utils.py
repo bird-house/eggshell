@@ -17,13 +17,14 @@ from matplotlib.collections import PatchCollection
 
 from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
-from os.path import abspath
+from os.path import abspath, curdir
 LOGGER = logging.getLogger("PYWPS")
 
-work_dir = abspath(self.workdir)
+work_dir = abspath(curdir)
 
 
-def fig2plot(fig, file_extension='png', output_dir=work_dir, bbox_inches='tight', dpi=300, facecolor='w', edgecolor='k', figsize=(20, 10)):
+def fig2plot(fig, file_extension='png', output_dir=work_dir, bbox_inches='tight',
+             dpi=300, facecolor='w', edgecolor='k', figsize=(20, 10)):
     '''saving a matplotlib figure to a graphic
 
     :param fig: matplotlib figure object
@@ -34,7 +35,8 @@ def fig2plot(fig, file_extension='png', output_dir=work_dir, bbox_inches='tight'
     '''
 
     _, graphic = mkstemp(dir=output_dir, suffix='.%s' % file_extension)
-    fig.savefig(graphic, bbox_inches=bbox_inches, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor, figsize=figsize)
+    fig.savefig(graphic, bbox_inches=bbox_inches, dpi=dpi, facecolor=facecolor,
+                edgecolor=edgecolor, figsize=figsize)
 
     return graphic
 
@@ -121,7 +123,6 @@ def concat_images(images, orientation='v'):
 
     LOGGER.debug('Images to be concatinated: %s' % images)
 
-
     if len(images) > 1:
         try:
             images_existing = [img for img in images if os.path.exists(img)]
@@ -154,7 +155,7 @@ def concat_images(images, orientation='v'):
 
             ip, image = mkstemp(dir=work_dir, suffix='.png')
             result.save(image)
-        except:
+        except Exception:
             LOGGER.exception('failed to concat images')
             _, image = mkstemp(dir=work_dir, suffix='.png')
             result = Image.new("RGB", (50, 50))
@@ -186,7 +187,7 @@ def pdfmerge(pdfs):
             merger.append(pdf)
         _, mergedpdf = mkstemp(dir=work_dir, suffix='.pdf')
         merger.write(mergedpdf)
-    except:
+    except Exception:
         LOGGER.excetion('failed to merge pdfs')
         _, mergedpdf = mkstemp(dir=work_dir, suffix='.pdf')
 
