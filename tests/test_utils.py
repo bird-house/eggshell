@@ -1,13 +1,16 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """Tests for `utils` package."""
 
 import pytest
+from .common import TESTDATA
+
+import tempfile
+import zipfile
 
 from eggshell import utils
 from eggshell.utils import local_path
 from eggshell.config import Paths
+import eggshell as eg
+paths = Paths(eg)
 
 
 def test_archive():
@@ -25,9 +28,7 @@ def test_extract_archive():
 
 
 def test_Paths():
-    assert "flyingpigeon/tests/testdata" in paths.testdata
-    assert 'flyingpigeon/data' in paths.data
-    assert 'flyingpigeon/data/shapefiles' in paths.shapefiles
+    assert "eggshell/tests/testdata" in paths.testdata
 
 
 def test_local_path():

@@ -1,6 +1,6 @@
 import pytest
 
-from common import TESTDATA
+from .common import TESTDATA
 
 from eggshell.utils import local_path
 from eggshell.nc import nc_utils

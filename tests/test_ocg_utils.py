@@ -1,6 +1,6 @@
 import pytest
 
-from common import TESTDATA
+from .common import TESTDATA
 
 from os.path import basename, join
 import tempfile
@@ -12,9 +12,9 @@ from eggshell import utils
 
 from eggshell.nc import ocg_utils
 from eggshell.utils import local_path
-
-import flyingpigeon as fp
-paths = Paths(fp)
+from eggshell.config import Paths
+import eggshell as eg
+paths = Paths(eg)
 
 def test_ocgis_import():
     from ocgis import constants
