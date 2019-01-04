@@ -1,6 +1,6 @@
 import pytest
 
-from .common import TESTDATA
+# from .common import TESTDATA
 
 from os.path import basename, join
 import tempfile
