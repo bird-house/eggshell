@@ -2,24 +2,37 @@
 # from snappy import ProductUtils
 # from snappy import ProgressMonitor
 # from snappy import jpy
-#
-# from os.path import splitext, basename
-# from os.path import join
+
+from matplotlib import pyplot as plt
+
+from os.path import splitext, basename
+from os.path import join
+from tempfile import mkstemp
+import numpy as np
+
+from eggshell.plot import plt_utils
+
+import logging
+LOGGER = logging.getLogger("PYWPS")
 
 
-def plot_products(products, extend=[10, 20, 5, 15]):
+def plot_products(products, extend=[10, 20, 5, 15], dir_output='.'):
     """
     plot the products extends of the search result
 
-    :param products: output of sentinel api search
+    :param products: output of sentinelapi search
+    :parm extend: extend of the background map to be plotted
+    :param dir_output: path to folder where to store the returned graphic
 
-    :return graphic: map of extents
+    :return png: map of extents
     """
-    from matplotlib import pyplot as plt
+    LOGGER.info('Start plotting extend of found products')
+
     from matplotlib.patches import Polygon
     import matplotlib.patches as mpatches
     from matplotlib.collections import PatchCollection
     import cartopy.crs as ccrs
+    from cartopy import feature as cfeature
     import re
 
     try:
@@ -32,23 +45,29 @@ def plot_products(products, extend=[10, 20, 5, 15]):
         ax.add_feature(cfeature.BORDERS)
 
         pat = re.compile(r'''(-*\d+\.\d+ -*\d+\.\d+);*''')
+        LOGGER.info('plot configured')
 
         for key in products.keys():
-            polygon = str(products[key]['footprint'])
-
-            # s = 'POLYGON ((15.71888453311329 9.045763865974665,15.7018748825589 8.97110837227606,15.66795226563288 8.822558900399137,15.639498612331632 8.69721920092792,15.63428409805786 8.674303514900869,15.600477269179995 8.525798537094156,15.566734239298787 8.377334323160321,15.53315342410745 8.228822837291709,15.499521168391912 8.080353481086165,15.493321895031096 8.052970059354971,14.999818486685434 8.053569047879877,14.999818016115439 9.046743365203026,15.71888453311329 9.045763865974665))'
-            matches = pat.findall(polygon)
-            if matches:
-                xy = np.array([map(float, m.split()) for m in matches])
-                ax.add_patch(mpatches.Polygon(xy, closed=True,  transform=ccrs.PlateCarree(), alpha=0.4)) # color='coral'
+            try:
+                polygon = str(products[key]['footprint'])
+                matches = pat.findall(polygon)
+                if matches:
+                    xy = np.array([m.split() for m in matches])
+                    # [map(float, m.split()) for m in matches]
+                    ax.add_patch(mpatches.Polygon(xy, closed=True,
+                                                  transform=ccrs.PlateCarree(),
+                                                  alpha=0.4))
+                    #  color='coral'
+                LOGGER.info('Polygon plotted')
+            except Exception as ex:
+                LOGGER.exception('failded to plot polygon {}'.format(ex))
         # ccrs.Geodetic()
-
         ax.gridlines(draw_labels=True,)
-        img = vs.fig2plot(fig, output_dir='.')
-    except:
-        LOGGER.debug('failed to plot EO products')
-        _, img = mkstemp(dir='.', prefix='dummy_', suffix='.png')
-
+        img = plt_utils.fig2plot(fig, dir_output=dir_output)
+        LOGGER.info('extend plotted')
+    except Exception as ex:
+        LOGGER.exception('failed to plot EO products {}'.format(ex))
+        _, img = mkstemp(dir=dir_output, prefix='dummy_', suffix='.png')
     return img
 
 
@@ -62,13 +81,14 @@ def plot_RGB(DIR, colorscheem='natural_color'):
 
     :returns: png image
     """
-    from snappy import ProductIO
-    from snappy import ProductUtils
-    from snappy import ProgressMonitor
-    from snappy import jpy
 
-    from os.path import splitext, basename
-    from os.path import join
+    # from snappy import ProductIO
+    # from snappy import ProductUtils
+    # from snappy import ProgressMonitor
+    # from snappy import jpy
+    #
+    # from os.path import splitext, basename
+    # from os.path import join
 
 
     mtd = 'MTD_MSIL1C.xml'
@@ -188,13 +208,13 @@ def plot_band(source, file_extension='PNG', colorscheem=None):
 
     :result str: path to graphic file
     """
-    from snappy import ProductIO
-    from snappy import ProductUtils
-    from snappy import ProgressMonitor
-    from snappy import jpy
-
-    from os.path import splitext, basename
-    from os.path import join
+    # from snappy import ProductIO
+    # from snappy import ProductUtils
+    # from snappy import ProgressMonitor
+    # from snappy import jpy
+    #
+    # from os.path import splitext, basename
+    # from os.path import join
 
 
     try:
