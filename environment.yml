@@ -8,20 +8,25 @@ dependencies:
 # Optional dependencies.
 # eggshell can be imported without them.
 # Only sub-packages will raise import errors
-################
-# numeric
+####################
+# top level package
 - python=3
 - numpy
 #- scipy
-################
-# visualisation
+###################
+# sub-package plot
 - matplotlib
 - cartopy
 #- iris
 ################
+# sub-package nc
 #- libnetcdf
 - netCDF4
 - ocgis=2.1.0=py_3
+- gdal
+###################
+# sub-package eo
+# - gdal
 ################
 # tests
 - pytest
