@@ -16,12 +16,12 @@ dependencies:
 ################
 # visualisation
 - matplotlib
-#- cartopy
+- cartopy
 #- iris
 ################
 #- libnetcdf
 - netCDF4
-- ocgis
+- ocgis=2.1.0=py_3
 ################
 # tests
 - pytest
