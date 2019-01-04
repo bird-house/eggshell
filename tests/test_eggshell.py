@@ -1,6 +1,6 @@
 import pytest
 
-# from .common import TESTDATA
+from common import TESTDATA
 
 from os.path import basename, join
 import tempfile
@@ -13,14 +13,14 @@ from eggshell.utils import local_path
 from eggshell.nc import ocg_utils
 from eggshell.nc import nc_utils
 from eggshell.config import Paths
-import flyingpigeon as fp
-paths = Paths(fp)
+import eggshell as es
+paths = Paths(es)
 
 
 def test_Paths():
-    assert "flyingpigeon/tests/testdata" in paths.testdata
-    assert 'flyingpigeon/data' in paths.data
-    assert 'flyingpigeon/data/shapefiles' in paths.shapefiles
+    assert "eggshell/tests/testdata" in paths.testdata
+    assert 'eggshell/data' in paths.data
+    assert 'eggshell/data/shapefiles' in paths.shapefiles
 
 
 def test_local_path():
@@ -39,8 +39,8 @@ def test_ocgis_import():
 #     assert False == has_lambert
 
 
-def test_gdal():
-    from flyingpigeon.subset import clipping
+# def test_gdal():
+#     from flyingpigeon.subset import clipping
 
 
 @pytest.mark.skip(reason="no way of currently testing this")
