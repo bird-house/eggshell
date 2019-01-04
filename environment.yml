@@ -4,7 +4,7 @@ channels:
 - defaults
 dependencies:
 - six
-#- pywps
+- pywps
 # Optional dependencies.
 # eggshell can be imported without them.
 # Only sub-packages will raise import errors
@@ -14,13 +14,13 @@ dependencies:
 #- scipy
 ################
 # visualisation
-#- matplotlib
+- matplotlib
 #- cartopy
 #- iris
 ################
 #- libnetcdf
 - netCDF4
-#- ocgis
+- ocgis
 ################
 # tests
 - pytest
