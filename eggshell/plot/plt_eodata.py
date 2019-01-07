@@ -195,7 +195,6 @@ def plot_products(products, extend=[10, 20, 5, 15], dir_output='.'):
 #     return imagefile
 
 
-
 # def plot_band(source, file_extension='PNG', colorscheem=None):
 #     """
 #     plots the first band of a geotif file

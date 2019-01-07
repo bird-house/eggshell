@@ -10,6 +10,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 import matplotlib.patches as mpatches
+import cartopy.crs as ccrs
 
 from cartopy.util import add_cyclic_point
 from eggshell.nc.calculation import fieldmean
@@ -30,7 +31,6 @@ def plot_extend(resource, file_extension='png'):
 
     :return graphic: graphic in specified format
     """
-    import matplotlib.patches as mpatches
     lats, lons = get_coordinates(resource, unrotate=True)
 
     # box_top = 45
@@ -51,7 +51,7 @@ def plot_extend(resource, file_extension='png'):
     ax = plt.axes(projection=projection)
     ax.stock_img()
     ax.coastlines()
-    ax.add_patch(mpatches.Polygon(xy, closed=True,  transform=ccrs.PlateCarree(), color='coral', alpha=0.6))
+    ax.add_patch(mpatches.Polygon(xy, closed=True, transform=ccrs.PlateCarree(), color='coral', alpha=0.6))
     # ccrs.Geodetic()
     ax.gridlines()
     plt.show()
@@ -90,8 +90,8 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png'):
             title = "Field mean of %s " % variable
 
         LOGGER.info('plot values preparation done')
-    except:
-        msg = "plot values preparation failed"
+    except Exception as ex:
+        msg = "plot values preparation failed {}".format(ex)
         LOGGER.exception(msg)
         raise Exception(msg)
     try:
@@ -113,8 +113,8 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png'):
 
         plt.close()
         LOGGER.info('timeseries spaghetti plot done for %s with %s lines.' % (variable, c))
-    except Exception as e:
-        msg = 'matplotlib spaghetti plot failed: {}'.format(e)
+    except Exception as ex:
+        msg = 'matplotlib spaghetti plot failed: {}'.format(ex)
         LOGGER.exception(msg)
     return output_png
 
@@ -149,7 +149,7 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
         title = "Field mean of %s " % variable
 
     try:
-        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')  # dpi=600,
+        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
         #  variable = get_variable(resouces[0])
         df = pd.DataFrame()
 
@@ -194,7 +194,8 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
                      ha='right', va='bottom', alpha=0.5)
 
         try:
-            rmean = df_smooth.quantile([0.5], axis=1,)  # df_smooth.median(axis=1)
+            rmean = df_smooth.quantile([0.5], axis=1,)
+            # df_smooth.median(axis=1)
             # skipna=False  quantile([0.5], axis=1, numeric_only=False )
             q05 = df_smooth.quantile([0.10], axis=1,)  # numeric_only=False)
             q33 = df_smooth.quantile([0.33], axis=1,)  # numeric_only=False)

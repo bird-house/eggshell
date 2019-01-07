@@ -15,6 +15,7 @@ from zipfile import ZipFile
 
 import eggshell as eg
 from eggshell.config import Paths
+from eggshell.nc.nc_utils import get_variable
 
 paths = Paths(eg)
 
@@ -163,45 +164,45 @@ def extract_archive(resources, output_dir=None):
     return files
 
 
-def get_coordinates(resource, variable=None, unrotate=False):
-    """
-    reads out the coordinates of a variable
-
-    :param resource: netCDF resource file
-    :param variable: variable name
-    :param unrotate: If True the coordinates will be returned for unrotated pole
-
-    :returns list, list: latitudes , longitudes
-    """
-    if type(resource) != list:
-        resource = [resource]
-
-    if variable is None:
-        variable = get_variable(resource)
-
-    if unrotate is False:
-        try:
-            if len(resource) > 1:
-                ds = MFDataset(resource)
-            else:
-                ds = Dataset(resource[0])
-
-            var = ds.variables[variable]
-            dims = list(var.dimensions)
-            if 'time' in dims:
-                dims.remove('time')
-            # TODO: find position of lat and long in list and replace dims[0] dims[1]
-            lats = ds.variables[dims[0]][:]
-            lons = ds.variables[dims[1]][:]
-            ds.close()
-            LOGGER.info('got coordinates without pole rotation')
-        except Exception as e:
-            msg = 'failed to extract coordinates: {}'.format(e)
-            raise Exception(msg)
-    else:
-        lats, lons = unrotate_pole(resource)
-        LOGGER.info('got coordinates with pole rotation')
-    return lats, lons
+# def get_coordinates(resource, variable=None, unrotate=False):
+#     """
+#     reads out the coordinates of a variable
+#
+#     :param resource: netCDF resource file
+#     :param variable: variable name
+#     :param unrotate: If True the coordinates will be returned for unrotated pole
+#
+#     :returns list, list: latitudes , longitudes
+#     """
+#     if type(resource) != list:
+#         resource = [resource]
+#
+#     if variable is None:
+#         variable = get_variable(resource)
+#
+#     if unrotate is False:
+#         try:
+#             if len(resource) > 1:
+#                 ds = MFDataset(resource)
+#             else:
+#                 ds = Dataset(resource[0])
+#
+#             var = ds.variables[variable]
+#             dims = list(var.dimensions)
+#             if 'time' in dims:
+#                 dims.remove('time')
+#             # TODO: find position of lat and long in list and replace dims[0] dims[1]
+#             lats = ds.variables[dims[0]][:]
+#             lons = ds.variables[dims[1]][:]
+#             ds.close()
+#             LOGGER.info('got coordinates without pole rotation')
+#         except Exception as e:
+#             msg = 'failed to extract coordinates: {}'.format(e)
+#             raise Exception(msg)
+#     else:
+#         lats, lons = unrotate_pole(resource)
+#         LOGGER.info('got coordinates with pole rotation')
+#     return lats, lons
 
 
 def rename_complexinputs(complexinputs):

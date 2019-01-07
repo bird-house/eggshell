@@ -146,7 +146,7 @@ def concat_images(images, orientation='v'):
                     cw = oi.size[0]
                     ch = oi.size[1]
                     cp = h * i
-                    box = [0, cp, cw, ch+cp]
+                    box = [0, cp, cw, ch + cp]
                     result.paste(oi, box=box)
 
             if orientation == 'h':
@@ -158,7 +158,7 @@ def concat_images(images, orientation='v'):
                     cw = oi.size[0]
                     ch = oi.size[1]
                     cp = w * i
-                    box = [cp, 0, cw+cp, ch]
+                    box = [cp, 0, cw + cp, ch]
                     result.paste(oi, box=box)
 
             ip, image = mkstemp(dir=work_dir, suffix='.png')
