@@ -1,7 +1,7 @@
 from netCDF4 import Dataset, MFDataset, num2date
 from ocgis import RequestDataset
 from datetime import datetime as dt
-#TODO: change to nc_utils guess_main_variables
+# TODO: change to nc_utils guess_main_variables
 # from eggshell.nc.ocg_utils import get_variable
 import time
 import logging
@@ -9,7 +9,7 @@ import os
 import requests
 
 LOGGER = logging.getLogger("PYWPS")
-#from esgf_utils import ATTRIBUTE_TO_FACETS_MAP
+# from esgf_utils import ATTRIBUTE_TO_FACETS_MAP
 
 
 class CookieNetCDFTransfer:
@@ -152,7 +152,8 @@ def get_coordinates(resource, variable=None, unrotate=False):
 
             var = ds.variables[variable]
             dims = list(var.dimensions)
-            if 'time' in dims: dims.remove('time')
+            if 'time' in dims:
+                dims.remove('time')
             # TODO: find position of lat and long in list and replace dims[0] dims[1]
             lats = ds.variables[dims[0]][:]
             lons = ds.variables[dims[1]][:]
@@ -162,8 +163,9 @@ def get_coordinates(resource, variable=None, unrotate=False):
             msg = 'failed to extract coordinates'
             LOGGER.exception(msg)
     else:
-        lats, lons = unrotate_pole(resource)
-        LOGGER.info('got coordinates with pole rotation')
+        # lats, lons = unrotate_pole(resource)
+        # LOGGER.info('got coordinates with pole rotation')
+        LOGGER.error('got coordinates with pole rotation is currently switched off')
     return lats, lons
 
 
@@ -229,9 +231,9 @@ def get_variable(resources):
         if len(ncdataset.variables[var].dimensions) >= 3:
             main_vars.append(var)
     if len(main_vars) > 1:
-        logger.exception('more than one 3D or 4D variable in file')
+        LOGGER.exception('more than one 3D or 4D variable in file')
     if len(main_vars) == 0:
-        logger.exception('No 3D or 4D variable detected')
+        LOGGER.exception('No 3D or 4D variable detected')
     return main_vars[0]
 
     # var_candidates = []
@@ -428,47 +430,13 @@ def get_frequency(resource):
     try:
         frequency = ds.frequency
         LOGGER.info('frequency written in the meta data:  %s', frequency)
-    except Exception as e:
-        msg = "Could not specify frequency for %s" % (resource)
+    except Exception as ex:
+        msg = "Could not specify frequency for %s : %s" % (resource, ex)
         LOGGER.exception(msg)
         raise Exception(msg)
     else:
         ds.close()
     return frequency
-
-
-def get_index_lat(resource, variable=None):
-    """
-    returns the dimension index of the latiude values
-
-    :param resource:  list of path(s) to netCDF file(s) of one Dataset
-    :param variable: variable name
-
-    :return int: index
-    """
-
-    if variable is None:
-        variable = get_variable(resource)
-
-    if type(resource) != list:
-        resource = [resource]
-    if len(resource) == 1:
-        ds = Dataset(resource[0])
-    else:
-        ds = MFDataset(resource)
-
-    var = ds.variables[variable]
-    dims = list(var.dimensions)
-
-    if 'rlat' in dims:
-        index = dims.index('rlat')
-    if 'lat' in dims:
-        index = dims.index('lat')
-    if 'latitude' in dims:
-        index = dims.index('latitude')
-    if 'y' in dims:
-        index = dims.index('y')
-    return index
 
 
 def get_timerange(resource):
@@ -536,8 +504,8 @@ def get_time(resource):
         else:
             ds = Dataset(resource[0])
         time = ds.variables['time']
-    except:
-        msg = 'failed to get time'
+    except Exception as ex:
+        msg = 'failed to get time {}'.format(ex)
         LOGGER.exception(msg)
         raise Exception(msg)
 
