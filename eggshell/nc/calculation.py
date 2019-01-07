@@ -16,7 +16,7 @@ def fieldmean(resource):
     from numpy import radians, average, cos, sqrt, array
 
     data = get_values(resource)  # np.squeeze(ds.variables[variable][:])
-    dim = data.shape
+    # dim = data.shape
     LOGGER.debug(data.shape)
 
     if len(data.shape) == 3:
@@ -58,7 +58,7 @@ def remove_mean_trend(fana, varname):
     if type(fana) == list:
         fana = fana[0]
 
-    backup_ana = 'orig_mod_'+path.basename(fana)
+    backup_ana = 'orig_mod_' + path.basename(fana)
 
     cdo = Cdo()
 
@@ -87,7 +87,7 @@ def remove_mean_trend(fana, varname):
     mean_arcvar = mean_arc_dataset.variables[varname][:]
     data = mean_arcvar[:, 0, 0]
     mean_arc_dataset.close()
-    x = np.linspace(0, len(data)-1, len(data))
+    x = np.linspace(0, len(data) - 1, len(data))
     y = data
 
     # Very slow method.
@@ -110,15 +110,15 @@ def remove_mean_trend(fana, varname):
 
     orig_arcvar[:] = det
 
-    at = {k: orig_arcvar.getncattr(k) for k in orig_arcvar.ncattrs()}
+    # at = {k: orig_arcvar.getncattr(k) for k in orig_arcvar.ncattrs()}
     maxat = np.max(det)
     minat = np.min(det)
     act = np.zeros((2), dtype=np.float32)
     valid = np.zeros((2), dtype=np.float32)
     act[0] = minat
     act[1] = maxat
-    valid[0] = minat - abs(0.2*minat)
-    valid[1] = maxat + abs(0.2*maxat)
+    valid[0] = minat - abs(0.2 * minat)
+    valid[1] = maxat + abs(0.2 * maxat)
     act_attr = {}
     val_attr = {}
 

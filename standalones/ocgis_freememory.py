@@ -15,7 +15,8 @@ env.OVERWRITE = True
 #
 # ncs = []
 # for year in years:
-#     url = 'https://www.esrl.noaa.gov/psd/thredds/fileServer/Datasets/ncep.reanalysis.dailyavgs/pressure/slp.%s.nc' % (year)
+#     url = 'https://www.esrl.noaa.gov/psd/thredds/fileServer/Datasets/ncep.reanalysis.dailyavgs/pressure/slp.%s.nc'
+# % (year)
 #     ncs.extend([utils.download_file(url)])
 # # print ncs
 
@@ -82,10 +83,10 @@ print(geom)
 ########################
 # simulation if memory is not enough for the dataload. Than calculate in chunks
 
-fm_sim = data_mb/2
+fm_sim = data_mb / 2
 
 if data_mb >= fm_sim:
-    print "NOT enough memory. data will be processed in chunks"
+    print("NOT enough memory. data will be processed in chunks")
     # calculate tile dimension:
     tile_dimension = 10
 # TODO: needs to be calculated based on dataload and available memory
