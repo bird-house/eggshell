@@ -5,6 +5,7 @@ from datetime import datetime as dt
 # from eggshell.nc.ocg_utils import get_variable
 import logging
 import os
+from os import path, rename
 import requests
 
 LOGGER = logging.getLogger("PYWPS")
@@ -670,8 +671,8 @@ def get_values(resource, variable=None):
 #     ds.close()
 #
 #     return lats, lons
-#
-#
+
+
 def drs_filename(resource, skip_timestamp=False, skip_format=False,
                  variable=None, rename_file=False, add_file_path=False):
     """
@@ -690,7 +691,7 @@ def drs_filename(resource, skip_timestamp=False, skip_format=False,
     :param rename_file: rename the file. (default: False)
     :returns str: DRS filename
     """
-    from os import path, rename
+
 
     try:
         ds = Dataset(resource)

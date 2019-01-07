@@ -239,8 +239,8 @@ def write_fileinfo(resource, filepath=False):
                 for f in resource:
                     fp.write('%s \n' % realpath(f))
         LOGGER.info('resources filenames written to textfile')
-    except:
-        LOGGER.exception('failed to write file names to file')
+    except Exception as ex:
+        LOGGER.exception('failed to write file names to file {}'.format(ex))
 
     return text_src
 
@@ -282,10 +282,10 @@ def write_fileinfo(resource, filepath=False):
 #   "assets.analytic_b11:download",
 #   "assets.analytic_b12:download"
 #  ],
-#
 
 
-# def fetch_eodata(item_type, asset, token, bbox, period=[dt.today()-timedelta(days=30), dt.today()],  cloud_cover=0.5, cache=True):
+# def fetch_eodata(item_type, asset, token, bbox, period=[dt.today()-timedelta
+# (days=30), dt.today()],  cloud_cover=0.5, cache=True):
 #     """
 #     search for given EO data product provided by planet.
 #     The search and appropriate download is limited by bbox and search period
@@ -409,7 +409,8 @@ def write_fileinfo(resource, filepath=False):
 #         else:
 #             id0_url = 'https://api.planet.com/data/v1/item-types/{}/items/{}/assets'.format(item_type, id0)
 #
-#             # Returns JSON metadata for assets in this ID. Learn more: planet.com/docs/reference/data-api/items-assets/#asset
+#             # Returns JSON metadata for assets in this ID. Learn more:
+              # planet.com/docs/reference/data-api/items-assets/#asset
 #             result = requests.get(id0_url, auth=HTTPBasicAuth(PLANET_API_KEY, ''))
 #             # List of asset types available for this particular satellite image
 #             keys = result.json().keys()

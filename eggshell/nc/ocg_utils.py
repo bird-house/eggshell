@@ -7,32 +7,33 @@ LOGGER = logging.getLogger("PYWPS")
 
 # This should replace calc_grouping, as it provides direct access to keys and makes inspection easier.
 temp_groups = {'AMJJAS': [[4, 5, 6, 7, 8, 9], 'unique'],
-     'Apr': [[4], 'unique'],
-     'Aug': [[8], 'unique'],
-     'DJF': [[12, 1, 2], 'unique'],
-     'Dec': [[12], 'unique'],
-     'Feb': [[2], 'unique'],
-     'JJA': [[6, 7, 8], 'unique'],
-     'Jan': [[1], 'unique'],
-     'Jul': [[7], 'unique'],
-     'Jun': [[6], 'unique'],
-     'MAM': [[3, 4, 5], 'unique'],
-     'Mar': [[3], 'unique'],
-     'May': [[5], 'unique'],
-     'Nov': [[11], 'unique'],
-     'ONDJFM': [[10, 11, 12, 1, 2, 3], 'unique'],
-     'Oct': [[10], 'unique'],
-     'SON': [[9, 10, 11], 'unique'],
-     'Sep': [[9], 'unique'],
-     'day': ['year', 'month', 'day'],
-     'mon': ['year', 'month'],
-     'sem': [[12, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11], 'unique'],
-     'yr': ['year']}
-
+               'Apr': [[4], 'unique'],
+               'Aug': [[8], 'unique'],
+               'DJF': [[12, 1, 2], 'unique'],
+               'Dec': [[12], 'unique'],
+               'Feb': [[2], 'unique'],
+               'JJA': [[6, 7, 8], 'unique'],
+               'Jan': [[1], 'unique'],
+               'Jul': [[7], 'unique'],
+               'Jun': [[6], 'unique'],
+               'MAM': [[3, 4, 5], 'unique'],
+               'Mar': [[3], 'unique'],
+               'May': [[5], 'unique'],
+               'Nov': [[11], 'unique'],
+               'ONDJFM': [[10, 11, 12, 1, 2, 3], 'unique'],
+               'Oct': [[10], 'unique'],
+               'SON': [[9, 10, 11], 'unique'],
+               'Sep': [[9], 'unique'],
+               'day': ['year', 'month', 'day'],
+               'mon': ['year', 'month'],
+               'sem': [[12, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11], 'unique'],
+               'yr': ['year']}
 # # TODO: include regridding with ocgis
 
-def call(resource=[], variable=None, dimension_map=None, agg_selection=True, calc=None,
-         calc_grouping=None, conform_units_to=None, crs=None, memory_limit=None,  prefix=None,
+
+def call(resource=[], variable=None, dimension_map=None, agg_selection=True,
+         calc=None, calc_grouping=None, conform_units_to=None, crs=None,
+         memory_limit=None, prefix=None,
          regrid_destination=None, regrid_options='bil', level_range=None,  # cdover='python',
          geom=None, output_format_options=None, search_radius_mult=2.,
          select_nearest=False, select_ugid=None, spatial_wrapping=None,
@@ -103,8 +104,8 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
                 #               dt.combine(time_range[1], dt_time(12,0))]
             LOGGER.debug('time_range changed to type= %s , %s ' % (type(time_range[0]), type(time_range[1])))
             LOGGER.debug('time_range changed to= %s , %s ' % (time_range[0], time_range[1]))
-        except:
-            LOGGER.exception('failed to convert data to datetime')
+        except Exception as ex:
+            LOGGER.exception('failed to convert data to datetime {}'.format(ex))
 
     if spatial_wrapping == 'wrap':
         spatial_reorder = True
@@ -166,7 +167,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
         LOGGER.exception('failed to setup OcgOperations: {}'.format(ex))
         return None
 
-    #TODO include comaprison dataload to available memory
+    # TODO include comaprison dataload to available memory
 
     dataload = 1
     available_memory = 2
@@ -326,7 +327,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True, cal
     #     lat, lon = unrotate_pole(output)
     # except:
     #     LOGGER.exception('failed to unrotate pole')
-      # output
+    # output
 
 
 def calc_grouping(grouping):
