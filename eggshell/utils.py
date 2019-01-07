@@ -13,6 +13,11 @@ from re import search
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
+import eggshell as eg
+from eggshell.config import Paths
+
+paths = Paths(eg)
+
 import logging
 
 LOGGER = logging.getLogger("EGGSHELL")
@@ -96,7 +101,7 @@ def download(url, cache=False):
     try:
         if cache:
             parsed_url = urlparse(url)
-            filename = os.path.join(config.cache_path(), parsed_url.netloc, parsed_url.path.strip('/'))
+            filename = os.path.join(paths.cache, parsed_url.netloc, parsed_url.path.strip('/'))
             if os.path.exists(filename):
                 LOGGER.info('file already in cache: %s', os.path.basename(filename))
                 if check_creationtime(filename, url):
