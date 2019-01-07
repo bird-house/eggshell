@@ -1,3 +1,7 @@
-from cdo import *
+"""
+Placeholder for cdo based functions
+"""
 
-cdo = Cdo()
+# from cdo import *
+#
+# cdo = Cdo()

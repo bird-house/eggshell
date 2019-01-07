@@ -196,13 +196,13 @@ def get_level(resource, level):
         # Exception arise for example for 20CRV2 data...
         try:
             new_var.setncatts({k: var.getncattr(k) for k in var.ncattrs()})
-        except:
-            LOGGER.info('Could not set attributes for z%s' % level)
+        except Exception as ex:
+            LOGGER.info('Could not set attributes for z {}{}'.format(level, ex))
         ds.close()
         LOGGER.info('level %s extracted' % level)
         data = call(level_data, variable='z%s' % level)
-    except:
-        LOGGER.exception('failed to extract level')
+    except Exception as ex:
+        LOGGER.exception('failed to extract level {}'.format(ex))
 
     return data
 

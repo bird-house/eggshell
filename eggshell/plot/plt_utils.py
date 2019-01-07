@@ -4,6 +4,8 @@ import logging
 # from matplotlib import use
 # use('Agg')   # use this if no xserver is available
 import numpy as np
+import os
+from os.path import join
 
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
@@ -18,6 +20,8 @@ from matplotlib.collections import PatchCollection
 from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
 from os.path import abspath, curdir
+
+
 LOGGER = logging.getLogger("PYWPS")
 
 work_dir = abspath(curdir)
@@ -55,62 +59,62 @@ class MidpointNormalize(Normalize):
         return np.ma.masked_array(np.interp(value, x, y))
 
 
-def plot_polygons(regions, file_extension='png'):
-    """
-    extract the polygon coordinate and plot it on a worldmap
-
-    :param regions: list of ISO abreviations for polygons
-
-    :return png: map_graphic.png
-    """
-
-    from cartopy.io.shapereader import Reader
-    from cartopy.feature import ShapelyFeature
-    from numpy import mean, append
-
-    import eggshell.config
-    # from flyingpigeon import config
-    DIR_SHP = config.shapefiles_path()
-
-    if type(regions) == str:
-        regions = list([regions])
-
-    fname = join(DIR_SHP, "countries.shp")
-    geos = Reader(fname).geometries()
-    records = Reader(fname).records()
-    central_latitude = []
-    central_longitude = []
-
-    for r in records:
-        geo = geos.next()
-        if r.attributes['ISO_A3'] in regions:
-            x, y = geo.centroid.coords.xy
-            central_longitude.append(x[0])
-            central_latitude.append(y[0])
-
-    fig = plt.figure(figsize=(20, 10))
-    projection = ccrs.Orthographic(central_longitude=mean(central_longitude),
-                                   central_latitude=mean(central_latitude),
-                                   globe=None)  # Robinson()
-    ax = plt.axes(projection=projection)
-
-    geos = Reader(fname).geometries()
-    records = Reader(fname).records()
-
-    for r in records:
-        geo = geos.next()
-        if r.attributes['ISO_A3'] in regions:
-            shape_feature = ShapelyFeature(geo, ccrs.PlateCarree(),
-                                           edgecolor='black', color='coral')
-            ax.add_feature(shape_feature)
-    ax.coastlines()
-    ax.gridlines()
-    ax.stock_img()
-    # ax.set_global()
-    map_graphic = fig2plot(fig=fig, file_extension=file_extension)
-    plt.close()
-
-    return map_graphic
+# def plot_polygons(regions, file_extension='png'):
+#     """
+#     extract the polygon coordinate and plot it on a worldmap
+#
+#     :param regions: list of ISO abreviations for polygons
+#
+#     :return png: map_graphic.png
+#     """
+#
+#     from cartopy.io.shapereader import Reader
+#     from cartopy.feature import ShapelyFeature
+#     from numpy import mean, append
+#
+#     import eggshell.config
+#     # from flyingpigeon import config
+#     DIR_SHP = config.shapefiles
+#
+#     if type(regions) == str:
+#         regions = list([regions])
+#
+#     fname = join(DIR_SHP, "countries.shp")
+#     geos = Reader(fname).geometries()
+#     records = Reader(fname).records()
+#     central_latitude = []
+#     central_longitude = []
+#
+#     for r in records:
+#         geo = geos.next()
+#         if r.attributes['ISO_A3'] in regions:
+#             x, y = geo.centroid.coords.xy
+#             central_longitude.append(x[0])
+#             central_latitude.append(y[0])
+#
+#     fig = plt.figure(figsize=(20, 10))
+#     projection = ccrs.Orthographic(central_longitude=mean(central_longitude),
+#                                    central_latitude=mean(central_latitude),
+#                                    globe=None)  # Robinson()
+#     ax = plt.axes(projection=projection)
+#
+#     geos = Reader(fname).geometries()
+#     records = Reader(fname).records()
+#
+#     for r in records:
+#         geo = geos.next()
+#         if r.attributes['ISO_A3'] in regions:
+#             shape_feature = ShapelyFeature(geo, ccrs.PlateCarree(),
+#                                            edgecolor='black', color='coral')
+#             ax.add_feature(shape_feature)
+#     ax.coastlines()
+#     ax.gridlines()
+#     ax.stock_img()
+#     # ax.set_global()
+#     map_graphic = fig2plot(fig=fig, file_extension=file_extension)
+#     plt.close()
+#
+#     return map_graphic
 
 
 def concat_images(images, orientation='v'):

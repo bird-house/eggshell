@@ -296,8 +296,8 @@ class file_info:
         # compute target window in pixel coordinates.
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
-        tw_xsize = int((tgw_lrx - t_geotransform[0])/t_geotransform[1] + 0.5) - tw_xoff
-        tw_ysize = int((tgw_lry - t_geotransform[3])/t_geotransform[5] + 0.5) - tw_yoff
+        tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) - tw_xoff
+        tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) - tw_yoff
 
         if tw_xsize < 1 or tw_ysize < 1:
             return 1
@@ -421,18 +421,18 @@ def main(argv=None):
             create_options.append(argv[i])
 
         elif arg == '-ps':
-            psize_x = float(argv[i+1])
-            psize_y = -1 * abs(float(argv[i+2]))
+            psize_x = float(argv[i + 1])
+            psize_y = -1 * abs(float(argv[i + 2]))
             i = i + 2
 
         elif arg == '-tap':
             bTargetAlignedPixels = True
 
         elif arg == '-ul_lr':
-            ulx = float(argv[i+1])
-            uly = float(argv[i+2])
-            lrx = float(argv[i+3])
-            lry = float(argv[i+4])
+            ulx = float(argv[i + 1])
+            uly = float(argv[i + 2])
+            lrx = float(argv[i + 3])
+            lry = float(argv[i + 4])
             i = i + 4
 
         elif arg[:1] == '-':
@@ -460,7 +460,8 @@ def main(argv=None):
 
     DriverMD = Driver.GetMetadata()
     if 'DCAP_CREATE' not in DriverMD:
-        print('Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % format)
+        print('Format driver %s does not support creation and piecewise writing.\n)
+        print('Please select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % format)
         sys.exit(1)
 
     # Collect information on all the source files.
@@ -487,7 +488,7 @@ def main(argv=None):
 
     # Try opening as an existing file.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    t_fh = gdal.Open(out_file, gdal.GA_Update )
+    t_fh = gdal.Open(out_file, gdal.GA_Update)
     gdal.PopErrorHandler()
 
     # Create output file if it does not already exist.
@@ -529,7 +530,8 @@ def main(argv=None):
             for fi in file_infos:
                 bands = bands + fi.bands
             if t_fh.RasterCount < bands:
-                print('Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge.')
+                print('Existing output file has less bands than the input files.)
+                print('You should delete it before. Terminating gdal_merge.')
                 sys.exit(1)
         else:
             bands = min(file_infos[0].bands, t_fh.RasterCount)
@@ -537,16 +539,16 @@ def main(argv=None):
     # Do we need to set nodata value ?
     if a_nodata is not None:
         for i in range(t_fh.RasterCount):
-            t_fh.GetRasterBand(i+1).SetNoDataValue(a_nodata)
+            t_fh.GetRasterBand(i + 1).SetNoDataValue(a_nodata)
 
     # Do we need to pre-initialize the whole mosaic file to some value?
     if pre_init is not None:
         if t_fh.RasterCount <= len(pre_init):
             for i in range(t_fh.RasterCount):
-                t_fh.GetRasterBand(i+1).Fill(pre_init[i])
+                t_fh.GetRasterBand(i + 1).Fill(pre_init[i])
         elif len(pre_init) == 1:
             for i in range(t_fh.RasterCount):
-                t_fh.GetRasterBand(i+1).Fill(pre_init[0])
+                t_fh.GetRasterBand(i + 1).Fill(pre_init[0])
 
     # Copy data from source files into output file.
     t_band = 1
@@ -562,25 +564,26 @@ def main(argv=None):
         if verbose != 0:
             print("")
             print("Processing file %5d of %5d, %6.3f%% completed in %d minutes."
-                  % (fi_processed+1, len(file_infos),
+                  % (fi_processed + 1, len(file_infos),
                      fi_processed * 100.0 / len(file_infos),
                      int(round((time.time() - start_time)/60.0))))
             fi.report()
 
         if separate == 0:
-            for band in range(1, bands+1):
+            for band in range(1, bands + 1):
                 fi.copy_into(t_fh, band, band, nodata)
         else:
-            for band in range(1, fi.bands+1):
+            for band in range(1, fi.bands + 1):
                 fi.copy_into(t_fh, band, t_band, nodata)
-                t_band = t_band+1
+                t_band = t_band + 1
 
-        fi_processed = fi_processed+1
+        fi_processed = fi_processed + 1
         if quiet == 0 and verbose == 0:
             progress(fi_processed / float(len(file_infos)))
 
     # Force file to be closed.
     t_fh = None
+
 
 if __name__ == '__main__':
     sys.exit(main())
