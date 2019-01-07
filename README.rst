@@ -34,7 +34,7 @@ to make it one of the building blocks of climate related PyWPS_ services.
 Features
 --------
 
-* TODO
+.. TODO:: Architecture of eggshell
 
 Credits
 -------

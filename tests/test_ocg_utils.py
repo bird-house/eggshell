@@ -27,8 +27,8 @@ def test_ocgis_import():
 #     assert False == has_lambert
 
 
-def test_gdal():
-    from flyingpigeon.subset import clipping
+# def test_gdal():
+#     from flyingpigeon.subset import clipping
 
 
 def test_archive_tar():
