@@ -3,7 +3,7 @@ import pytest
 from .common import TESTDATA
 
 from eggshell.utils import local_path
-from eggshell.nc import _utils
+from eggshell.nc import utils
 
 
 def test_get_frequency():
