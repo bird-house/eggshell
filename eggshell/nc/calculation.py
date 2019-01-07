@@ -70,7 +70,7 @@ def remove_mean_trend(fana, varname):
         cdo_cp = getattr(cdo, 'copy')
         cdo_cp(input=fana, output=backup_ana)
     except Exception:
-        if(path.isfile(backup_ana) == False):
+        if(path.isfile(backup_ana) is False):
             com = 'copy'
             comcdo = 'cdo -O %s %s %s' % (com, fana, backup_ana)
             system(comcdo)

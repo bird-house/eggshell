@@ -16,6 +16,7 @@ from eggshell.config import Paths
 import eggshell as eg
 paths = Paths(eg)
 
+
 def test_ocgis_import():
     from ocgis import constants
 
@@ -47,6 +48,7 @@ def test_get_variable():
     variable = ocg_utils.get_variable(local_path(TESTDATA['cordex_tasmax_2007_nc']))
     assert 'tasmax' == variable
 
+
 def test_has_variable():
     assert ocg_utils.has_variable(
         local_path(TESTDATA['cmip5_tasmax_2006_nc']), 'tasmax') is True
@@ -61,8 +63,6 @@ def test_calc_grouping():
     # check invalid value: should raise an exception
     with pytest.raises(Exception):
         ocg_utils.calc_grouping('unknown') == ['year']
-
-
 
 # def get_coordinates(resource, variable=None, unrotate=False):
 #     """

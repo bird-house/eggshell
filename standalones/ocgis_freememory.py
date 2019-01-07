@@ -6,9 +6,10 @@ from ocgis.util.large_array import compute
 from os import listdir
 from os.path import join
 
-env.OVERWRITE=True
 from datetime import datetime as dt
 import uuid
+
+env.OVERWRITE = True
 
 # years = range(2015,2017)
 #
@@ -19,7 +20,7 @@ import uuid
 # # print ncs
 
 level_range = [700, 700]
-# time_range = [dt.strptime('20100315', '%Y%m%d'), dt.strptime('20111210', '%Y%m%d')]
+#  time_range = [dt.strptime('20100315', '%Y%m%d'), dt.strptime('20111210', '%Y%m%d')]
 bbox = [-80, 20, 20, 70]
 
 p = '/home/nils/data/CORDEX/'
@@ -35,7 +36,7 @@ rd = RequestDataset(ncs)
 
 ops = OcgOperations(rd,
                     # time_range=time_range,
-                    calc = '%s=%s*1' % ('tas', 'tas'),
+                    calc='%s=%s*1' % ('tas', 'tas'),
                     # level_range=level_range,
                     geom=bbox,
                     output_format='nc',
@@ -50,7 +51,7 @@ duration = (shnap - shnip).total_seconds()
 print("operation performed with execute in {} sec.".format(duration))
 print(geom)
 
-tile_dimension=5  # default
+tile_dimension = 5  # default
 
 shnip = dt.now()
 geom = compute(ops, tile_dimension=tile_dimension, verbose=True)
@@ -86,4 +87,5 @@ fm_sim = data_mb/2
 if data_mb >= fm_sim:
     print "NOT enough memory. data will be processed in chunks"
     # calculate tile dimension:
-    tile_dimension= 10 # TODO: needs to be calculated based on dataload and available memory
+    tile_dimension = 10
+# TODO: needs to be calculated based on dataload and available memory

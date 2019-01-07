@@ -5,6 +5,7 @@ from .common import TESTDATA
 
 import tempfile
 import zipfile
+from os.path import basename
 
 from eggshell import utils
 from eggshell.utils import local_path

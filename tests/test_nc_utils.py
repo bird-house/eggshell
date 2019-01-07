@@ -3,7 +3,7 @@ import pytest
 from .common import TESTDATA
 
 from eggshell.utils import local_path
-from eggshell.nc import nc_utils
+from eggshell.nc import _utils
 
 
 def test_get_frequency():
@@ -65,6 +65,7 @@ def test_get_coordinates():
     lats, lons = nc_utils.get_coordinates(ncs)
     assert 103 == len(lats)
     assert 106 == len(lons)
+
 
 def test_sort_by_time():
     result = nc_utils.sort_by_time([local_path(TESTDATA['cmip5_tasmax_2007_nc']),

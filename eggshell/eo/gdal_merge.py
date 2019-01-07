@@ -460,7 +460,7 @@ def main(argv=None):
 
     DriverMD = Driver.GetMetadata()
     if 'DCAP_CREATE' not in DriverMD:
-        print('Format driver %s does not support creation and piecewise writing.\n)
+        print('Format driver %s does not support creation and piecewise writing.')
         print('Please select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % format)
         sys.exit(1)
 
@@ -566,7 +566,7 @@ def main(argv=None):
             print("Processing file %5d of %5d, %6.3f%% completed in %d minutes."
                   % (fi_processed + 1, len(file_infos),
                      fi_processed * 100.0 / len(file_infos),
-                     int(round((time.time() - start_time)/60.0))))
+                     int(round((time.time() - start_time) / 60.0))))
             fi.report()
 
         if separate == 0:
