@@ -3,7 +3,6 @@ from ocgis import RequestDataset
 from datetime import datetime as dt
 # TODO: change to nc_utils guess_main_variables
 # from eggshell.nc.ocg_utils import get_variable
-import time
 import logging
 import os
 import requests
@@ -222,7 +221,7 @@ def get_variable(resources):
     else:
         ncdataset = resources
 
-    dims = [key for key in ncdataset.dimensions.keys()]
+    # dims = [key for key in ncdataset.dimensions.keys()]
     vars = [key for key in ncdataset.variables.keys()]
 
     # assume that main variables are 3D or 4D

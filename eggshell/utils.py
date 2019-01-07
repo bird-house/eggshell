@@ -105,11 +105,12 @@ def download(url, cache=False):
             filename = os.path.join(paths.cache, parsed_url.netloc, parsed_url.path.strip('/'))
             if os.path.exists(filename):
                 LOGGER.info('file already in cache: %s', os.path.basename(filename))
-                if check_creationtime(filename, url):
-                    msg = 'file in cache older than archive file, downloading: {}'.format(os.path.basename(filename))
-                    LOGGER.info(msg)
-                    os.remove(filename)
-                    filename = download_file(url, out=filename)
+                # if check_creationtime(filename, url):
+                #     msg = 'file in cache older than archive file, downloading: {}'.format(os.path.basename(filename))
+                #     LOGGER.info(msg)
+                #     os.remove(filename)
+                #     filename = download_file(url, out=filename)
+                # TODO: enable creation time check
             else:
                 if not os.path.exists(os.path.dirname(filename)):
                     os.makedirs(os.path.dirname(filename))

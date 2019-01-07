@@ -28,7 +28,7 @@ p = '/home/nils/data/CORDEX/'
 ncs = [join(p, nc) for nc in listdir(p) if ".nc" in nc]
 ncs.sort()
 
-#ncs = datafetch.reanalyses(start=2000, end=2003)
+# ncs = datafetch.reanalyses(start=2000, end=2003)
 
 # TODO: BUG: ocg compute is not running if calc == None
 # calc = '%s=%s*1' % (variable, variable)
@@ -83,10 +83,10 @@ print(geom)
 ########################
 # simulation if memory is not enough for the dataload. Than calculate in chunks
 
-fm_sim = data_mb / 2
-
-if data_mb >= fm_sim:
-    print("NOT enough memory. data will be processed in chunks")
-    # calculate tile dimension:
-    tile_dimension = 10
+# fm_sim = data_mb / 2
+#
+# if data_mb >= fm_sim:
+#     print("NOT enough memory. data will be processed in chunks")
+#     # calculate tile dimension:
+#     tile_dimension = 10
 # TODO: needs to be calculated based on dataload and available memory

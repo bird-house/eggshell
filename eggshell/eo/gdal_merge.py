@@ -64,8 +64,8 @@ def GetOutputDriversFor(filename):
     ext = GetExtension(filename)
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
-           drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
+        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None
+            or drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
                 drv_list.append(drv.ShortName)
             else:
@@ -530,7 +530,7 @@ def main(argv=None):
             for fi in file_infos:
                 bands = bands + fi.bands
             if t_fh.RasterCount < bands:
-                print('Existing output file has less bands than the input files.)
+                print('Existing output file has less bands than the input files.')
                 print('You should delete it before. Terminating gdal_merge.')
                 sys.exit(1)
         else:
