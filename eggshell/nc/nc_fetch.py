@@ -410,7 +410,7 @@ def write_fileinfo(resource, filepath=False):
 #             id0_url = 'https://api.planet.com/data/v1/item-types/{}/items/{}/assets'.format(item_type, id0)
 #
 #             # Returns JSON metadata for assets in this ID. Learn more:
-              # planet.com/docs/reference/data-api/items-assets/#asset
+#             # planet.com/docs/reference/data-api/items-assets/#asset
 #             result = requests.get(id0_url, auth=HTTPBasicAuth(PLANET_API_KEY, ''))
 #             # List of asset types available for this particular satellite image
 #             keys = result.json().keys()

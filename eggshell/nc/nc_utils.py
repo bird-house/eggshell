@@ -691,8 +691,6 @@ def drs_filename(resource, skip_timestamp=False, skip_format=False,
     :param rename_file: rename the file. (default: False)
     :returns str: DRS filename
     """
-
-
     try:
         ds = Dataset(resource)
         if variable is None:
