@@ -1,7 +1,11 @@
 from eggshell import utils
-from eggshell import config
 from datetime import datetime as dt
 from datetime import timedelta
+
+from eggshell.utils import download
+from eggshell.config import Paths
+import eggshell as eg
+paths = Paths(eg)
 
 # import logging
 # logger = logging.getLogger(__name__)
@@ -114,9 +118,8 @@ def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day
                 # force updating of the current year dataset
                 if year == cur_year:
                     import urlparse
-                    from blackswan import config
                     parsed_url = urlparse.urlparse(url)
-                    cur_filename = path.join(config.cache_path(), parsed_url.netloc, parsed_url.path.strip('/'))
+                    cur_filename = path.join(path.cache, parsed_url.netloc, parsed_url.path.strip('/'))
                     if path.exists(cur_filename):
                         fn_time = dt.fromtimestamp(path.getmtime(cur_filename))
                         LOGGER.debug('Rean data for %s year creation time: %s' % (year, fn_time))
@@ -162,7 +165,7 @@ def reanalyses(start=1948, end=None, variable='slp', dataset='NCEP', timres='day
         LOGGER.exception(msg)
         raise Exception(msg)
 
-    if (level is None) or (getlevel==False):
+    if (level is None) or (getlevel is False):
         data = obs_data
     else:
         LOGGER.info('get level: %s' % level)

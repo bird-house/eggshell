@@ -65,7 +65,7 @@ def GetOutputDriversFor(filename):
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
         if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None
-            or drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
+                or drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
                 drv_list.append(drv.ShortName)
             else:
