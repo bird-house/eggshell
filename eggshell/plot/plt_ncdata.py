@@ -12,7 +12,6 @@ from matplotlib.patches import Polygon
 import matplotlib.patches as mpatches
 import cartopy.crs as ccrs
 
-from cartopy.util import add_cyclic_point
 from eggshell.nc.calculation import fieldmean
 from eggshell.nc.nc_utils import get_variable, get_frequency, get_coordinates
 from eggshell.nc.nc_utils import get_time, sort_by_filename
@@ -238,7 +237,6 @@ def map_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title='
     import matplotlib.axes as maxes
     from cartopy.util import add_cyclic_point
 
-
     try:
         var = nc_utils.get_values(ncfile, variable)
         LOGGER.info('Data loaded')
@@ -287,8 +285,8 @@ def map_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title='
         cb.set_label(u"–            Dissimilarity             +")  # ha='left', va='center')
         cb.set_ticks([])
 
-    except:
-        msg = 'failed to plot graphic'
+    except Exception as ex:
+        msg = 'failed to plot graphic {}'.format(ex)
         LOGGER.exception(msg)
 
     LOGGER.info('Plot created and figure saved')
