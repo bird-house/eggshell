@@ -46,6 +46,6 @@ def test_download_with_cache():
 def test_archive_zip():
     result = utils.archive(local_path(TESTDATA['cmip5_tasmax_2006_nc']),
                            format='zip',
-                           output_dir=tempfile.mkdtemp())
+                           dir_output=tempfile.mkdtemp())
     zipf = zipfile.ZipFile(result)
     assert len(zipf.namelist()) == 1

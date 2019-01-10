@@ -35,7 +35,7 @@ def test_ocgis_import():
 def test_archive_tar():
     result = utils.archive(local_path(TESTDATA['cmip5_tasmax_2006_nc']),
                            format='tar',
-                           output_dir=tempfile.mkdtemp())
+                           dir_output=tempfile.mkdtemp())
     tar = tarfile.open(result)
     assert len(tar.getnames()) == 1
 
