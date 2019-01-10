@@ -115,12 +115,13 @@ class MidpointNormalize(Normalize):
 #     return map_graphic
 
 
-def concat_images(images, orientation='v'):
+def concat_images(images, orientation='v', dir_output='.'):
     """
     concatenation of images.
 
     :param images: list of images
     :param orientation: vertical ('v' default) or horizontal ('h') concatenation
+    :param dir_output: output directory
 
     :return string: path to image
     """
@@ -159,11 +160,11 @@ def concat_images(images, orientation='v'):
                     box = [cp, 0, cw + cp, ch]
                     result.paste(oi, box=box)
 
-            ip, image = mkstemp(dir=work_dir, suffix='.png')
+            ip, image = mkstemp(dir=dir_output, suffix='.png')
             result.save(image)
         except Exception:
             LOGGER.exception('failed to concat images')
-            _, image = mkstemp(dir=work_dir, suffix='.png')
+            _, image = mkstemp(dir=dir_output, suffix='.png')
             result = Image.new("RGB", (50, 50))
             result.save(image)
     elif len(images) == 1:
@@ -176,11 +177,12 @@ def concat_images(images, orientation='v'):
     return image
 
 
-def pdfmerge(pdfs):
+def pdfmerge(pdfs, dir_output='.'):
     """
     merge a list of pdfs
 
     :param pdfs: list of pdf files
+    :parm dir_output: output directory
 
     :retun str: merged pdf
     """
@@ -191,10 +193,10 @@ def pdfmerge(pdfs):
         merger = PdfFileMerger()
         for pdf in pdfs:
             merger.append(pdf)
-        _, mergedpdf = mkstemp(dir=work_dir, suffix='.pdf')
+        _, mergedpdf = mkstemp(dir=dir_output, suffix='.pdf')
         merger.write(mergedpdf)
     except Exception:
         LOGGER.excetion('failed to merge pdfs')
-        _, mergedpdf = mkstemp(dir=work_dir, suffix='.pdf')
+        _, mergedpdf = mkstemp(dir=dir_output, suffix='.pdf')
 
     return mergedpdf
