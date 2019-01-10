@@ -228,7 +228,7 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
     return output_png
 
 
-def map_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title='Spatial analog'):
+def plot_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title='Spatial analog'):
     """Return a matplotlib Figure instance showing a map of the dissimilarity measure.
     """
     import netCDF4 as nc

@@ -132,7 +132,7 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True,
     LOGGER.info('Execute ocgis module call function')
 
     try:
-        LOGGER.debug('call module curdir = %s ' % abspath(curdir))
+        LOGGER.debug('call module dir_output = %s ' % abspath(dir_output))
         rd = RequestDataset(resource,
                             variable=variable,
                             level_range=level_range,
@@ -168,7 +168,6 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True,
         return None
 
     # TODO include comaprison dataload to available memory
-
     dataload = 1
     available_memory = 2
 
