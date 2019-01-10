@@ -64,7 +64,7 @@ def plot_extend(resource, file_extension='png'):
     return map_graphic
 
 
-def spaghetti(resouces, variable=None, title=None, file_extension='png'):
+def spaghetti(resouces, variable=None, title=None, file_extension='png', dir_output='.'):
     """
     creates a png file containing the appropriate spaghetti plot as a field mean of the values.
 
@@ -108,7 +108,7 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png'):
         plt.title(title, fontsize=20)
         plt.grid()
 
-        output_png = fig2plot(fig=fig, file_extension=file_extension)
+        output_png = fig2plot(fig=fig, file_extension=file_extension, dir_output=dir_output)
 
         plt.close()
         LOGGER.info('timeseries spaghetti plot done for %s with %s lines.' % (variable, c))
@@ -118,7 +118,7 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png'):
     return output_png
 
 
-def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='png', window=None):
+def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='png', window=None, dir_output='.'):
     """
     creates a png file containing the appropriate uncertainty plot.
 
@@ -217,7 +217,7 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
             plt.title(title, fontsize=20)
             plt.grid()  # .grid_line_alpha=0.3
 
-            output_png = fig2plot(fig=fig, file_extension=file_extension)
+            output_png = fig2plot(fig=fig, file_extension=file_extension, dir_output=dir_output)
             plt.close()
             LOGGER.debug('timeseries uncertainty plot done for %s' % variable)
         except Exception as err:

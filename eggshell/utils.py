@@ -24,13 +24,13 @@ import logging
 LOGGER = logging.getLogger("EGGSHELL")
 
 
-def archive(resources, format='tar', output_dir=None, mode=None):
+def archive(resources, format='tar', dir_output=None, mode=None):
     """
     Compresses a list of files into an archive.
 
     :param resources: list of files to be stored in archive
     :param format: archive format. Options: tar (default), zip
-    :param output_dir: path to output folder (default: tempory folder)
+    :param dir_output: path to output folder (default: tempory folder)
     :param mode: for format='tar':
                   'w' or 'w:'  open for writing without compression
                   'w:gz'       open for writing with gzip compression
@@ -44,7 +44,7 @@ def archive(resources, format='tar', output_dir=None, mode=None):
 
     :return str: archive path/filname.ext
     """
-    output_dir = output_dir or tempfile.gettempdir()
+    dir_output = dir_output or tempfile.gettempdir()
     mode = mode or 'w'
 
     if format not in ['tar', 'zip']:
@@ -57,7 +57,7 @@ def archive(resources, format='tar', output_dir=None, mode=None):
         resources = list([resources])
     resources = [x for x in resources if x is not None]
 
-    _, arch = tempfile.mkstemp(dir=output_dir, suffix='.{}'.format(format))
+    _, arch = tempfile.mkstemp(dir=dir_output, suffix='.{}'.format(format))
 
     try:
         if format == 'tar':
@@ -127,17 +127,17 @@ def download(url, cache=False):
     return filename
 
 
-def extract_archive(resources, output_dir=None):
+def extract_archive(resources, dir_output=None):
     """
     extracts archives (tar/zip)
 
     :param resources: list of archive files (if netCDF files are in list,
                      they are passed and returnd as well in the return).
-    :param output_dir: define a directory to store the results (default: tempory folder).
+    :param dir_output: define a directory to store the results (default: tempory folder).
 
     :return list: [list of extracted files]
     """
-    output_dir = output_dir or tempfile.gettempdir()
+    dir_output = dir_output or tempfile.gettempdir()
 
     if not isinstance(resources, list):
         resources = list([resources])
@@ -149,15 +149,15 @@ def extract_archive(resources, output_dir=None):
             ext = os.path.basename(arch).split('.')[-1]
 
             if ext == 'nc':
-                files.append(os.path.join(output_dir, arch))
+                files.append(os.path.join(dir_output, arch))
             elif ext == 'tar':
                 with tarfile.open(arch, mode='r') as tar:
                     tar.extractall()
-                    files.extend([os.path.join(output_dir, f) for f in tar.getnames()])
+                    files.extend([os.path.join(dir_output, f) for f in tar.getnames()])
             elif ext == 'zip':
                 with ZipFile(arch, mode='r') as zf:
                     zf.extractall()
-                    files.extend([os.path.join(output_dir, f) for f in zf.filelist])
+                    files.extend([os.path.join(dir_output, f) for f in zf.filelist])
             else:
                 LOGGER.warning('file extention {} unknown'.format(ext))
         except Exception as e:

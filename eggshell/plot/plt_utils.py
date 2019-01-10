@@ -24,12 +24,10 @@ from os.path import abspath, curdir
 
 LOGGER = logging.getLogger("PYWPS")
 
-work_dir = abspath(curdir)
-
 
 def fig2plot(fig,
              file_extension='png',
-             dir_output=work_dir,
+             dir_output='.',
              bbox_inches='tight',
              dpi=300, facecolor='w',
              edgecolor='k', figsize=(20, 10)):
