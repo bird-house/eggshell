@@ -37,7 +37,7 @@ rd = RequestDataset(ncs)
 
 ops = OcgOperations(rd,
                     # time_range=time_range,
-                    calc='%s=%s*1' % ('tas', 'tas'),
+                    # calc='%s=%s*1' % ('tas', 'tas'),
                     # level_range=level_range,
                     geom=bbox,
                     output_format='nc',
