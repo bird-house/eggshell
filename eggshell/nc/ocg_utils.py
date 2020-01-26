@@ -176,11 +176,10 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True,
             LOGGER.info('ocgis module call as ops.execute()')
             geom_file = ops.execute()
         else:
-            LOGGER.info('ocgis module call as compute(ops)')
+            # LOGGER.info('ocgis module call as compute(ops)')
             # TODO: estimate right tile_dimensionS
-            tile_dimension = 5  # default
-            LOGGER.info('ocgis module call compute with chunks')
-
+            tile_dimension = 10  # default
+            LOGGER.info('Not enough memory for data load, ocgis module call compute in chunks')
             geom_file = compute(ops, tile_dimension=tile_dimension, verbose=True)
 
     except Exception as ex:
