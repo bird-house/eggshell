@@ -146,7 +146,7 @@ def get_coordinates(resource, variable=None, unrotate=False):
     if unrotate is False:
         try:
             if len(resource) > 1:
-                ds = MFDataset(resource)
+                LOGGER.exception('resource is a list containing {} files. Should be only one'.format(len(resource)))
             else:
                 ds = Dataset(resource[0])
 
@@ -567,7 +567,7 @@ def get_values(resource, variable=None):
     elif len(resource) == 1:
         ds = Dataset(resource)
     else:
-        ds = MFDataset(resource)
+        LOGGER.exception('resource is a list containing {} files. Should be only one'.format(len(resource)))
     vals = squeeze(ds.variables[variable][:])
     return vals
 

@@ -13,6 +13,8 @@ import matplotlib.patches as mpatches
 import cartopy.crs as ccrs
 
 from eggshell.nc.calculation import fieldmean
+from netCDF4 import Dataset
+
 from eggshell.nc.nc_utils import get_variable, get_frequency, get_coordinates
 from eggshell.nc.nc_utils import get_time, sort_by_filename
 from eggshell.plot.plt_utils import fig2plot
@@ -74,7 +76,7 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png', dir_out
 
     :retruns str: path to png file
     """
-    from eggshell.nc.calculation import fieldmean
+    # from eggshell.nc.calculation import fieldmean
 
     try:
         fig = plt.figure(figsize=(20, 10), dpi=600, facecolor='w', edgecolor='k')
@@ -95,11 +97,35 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png', dir_out
         raise Exception(msg)
     try:
         for c, nc in enumerate(resouces):
-            # get timestapms
             try:
-                dt = get_time(nc)  # [datetime.strptime(elem, '%Y-%m-%d') for elem in strDate[0]]
-                ts = fieldmean(nc)
-                plt.plot(dt, ts)
+                # dt = get_time(nc)
+                # ts = fieldmean(nc)
+
+                if 'historical' in nc:
+                    col = 'grey'
+                elif 'evaluation' in nc:
+                    col = 'black'
+                elif 'rcp26' in nc:
+                    col = 'blue'
+                elif 'rcp85' in nc:
+                    col = 'red'
+                else:
+                    col = 'green'
+
+                dt = get_time(nc) # [datetime.strptime(elem, '%Y-%m-%d') for elem in strDate[0]]
+                # ts = fieldmean(nc)
+
+                ds = Dataset(nc)
+                var = get_variable(nc)
+                tg_val = np.squeeze(ds.variables[var][:])
+                d2 = np.nanmean(tg_val, axis=1)
+                ts = np.nanmean(d2, axis=1)
+
+                plt.plot(dt, ts, col )
+                plt.grid()
+                plt.title(title)
+                #
+                # plt.plot(dt, ts)
                 # fig.line( dt,ts )
             except Exception as e:
                 msg = "spaghetti plot failed for {} : {}".format(nc, e)
