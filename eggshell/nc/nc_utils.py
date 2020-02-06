@@ -291,8 +291,14 @@ def sort_by_filename(resource, historical_concatination=False):
                     # LOGGER.info('file: %s' % nc)
                     p, f = path.split(path.abspath(nc))
                     n = f.split('_')
-                    bn = '_'.join(n[0:-1])  # skipping the date information in the filename
-                    ndic[bn] = []  # dictionary containing all datasets names
+                    if len([int(i) for i in n[-1].split('-') if i.isdigit()]) == 2:
+                        bn = '_'.join(n[0:-1])  # skipping the date information in the filename
+                        ndic[bn] = []  # dictionary containing all datasets names
+                    elif len([int(i) for i in n[-2].split('-') if i.isdigit()]) == 2:
+                        bn = '_'.join(n[0:-2])  # skipping the date information in the filename
+                        ndic[bn] = []  # dictionary containing all datasets names
+                    else:
+                        LOGGER.exception('file is not DRS convention conform!')
                 LOGGER.info('found %s datasets', len(ndic.keys()))
             except Exception:
                 LOGGER.exception('failed to find names of datasets!')
@@ -336,7 +342,8 @@ def sort_by_filename(resource, historical_concatination=False):
             for key in ndic.keys():
                 try:
                     ndic[key].sort()
-                    start, end = get_timerange(ndic[key])
+                    start, _ = get_timerange(ndic[key][0])  # get first timestep of first file
+                    _ , end = get_timerange(ndic[key][-1])  # get last  timestep of last file 
                     newkey = key + '_' + start + '-' + end
                     tmp_dic[newkey] = ndic[key]
                 except Exception:
@@ -455,9 +462,10 @@ def get_timerange(resource):
     LOGGER.debug('length of recources: %s files' % len(resource))
 
     try:
+        resource.sort()
         if len(resource) > 1:
-            ds = MFDataset(resource)
-            LOGGER.debug('MFDataset loaded for %s of files in resource:' % len(resource))
+            #ds = MFDataset(resource)
+            LOGGER.exception('functon expect single file, Mulitple files found' % len(resource))
         else:
             ds = Dataset(resource[0])
             LOGGER.debug('Dataset loaded for %s file in resource:' % len(resource))

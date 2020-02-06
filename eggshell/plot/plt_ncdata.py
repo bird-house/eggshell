@@ -10,14 +10,19 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 import matplotlib.patches as mpatches
+import cartopy.feature as cfeature
+
 import cartopy.crs as ccrs
+from cartopy.util import add_cyclic_point
 
 from eggshell.nc.calculation import fieldmean
-from netCDF4 import Dataset
-
 from eggshell.nc.nc_utils import get_variable, get_frequency, get_coordinates
 from eggshell.nc.nc_utils import get_time, sort_by_filename
 from eggshell.plot.plt_utils import fig2plot
+
+from numpy import meshgrid
+from netCDF4 import Dataset
+import numpy as np
 
 import logging
 LOGGER = logging.getLogger("PYWPS")
@@ -247,7 +252,7 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
             plt.close()
             LOGGER.debug('timeseries uncertainty plot done for %s' % variable)
         except Exception as err:
-            raise Exception('failed to calculate quantiles. %s' % err.message)
+            raise Exception('failed to calculate quantiles. %s' % err)
     except Exception:
         LOGGER.exception('uncertainty plot failed for %s.' % variable)
         _, output_png = mkstemp(dir='.', suffix='.png')
@@ -261,7 +266,6 @@ def plot_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title=
     from eggshell.nc import nc_utils
     from mpl_toolkits.axes_grid import make_axes_locatable
     import matplotlib.axes as maxes
-    from cartopy.util import add_cyclic_point
 
     try:
         var = nc_utils.get_values(ncfile, variable)
@@ -317,6 +321,82 @@ def plot_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title=
 
     LOGGER.info('Plot created and figure saved')
     return fig
+
+
+def plot_map(resouce, variable,
+             title=None, delta=0, cmap='RdYlBu_r',
+             file_extension='png', dir_output='.'):
+    """
+    creates a png file containing the appropriate uncertainty plot.
+
+    :param resouce: one netCDF file containng spatial values to be plotted
+    :param variable: variable to be visualised. If None (default), variable will be detected
+    :param title: string to be used as title
+    :param file_extension: file extinction for the graphic
+    :param dir_output: output directory to store the output graphic
+
+    :returns str: path/to/file.png
+    """
+
+
+    try:
+        LOGGER.debug('plot_map function read in values for {}'.format(resouce))
+
+        # get values of netcdf file
+        ds = Dataset(resouce)
+
+        lat = ds.variables['rlat']
+        lon = ds.variables['rlon']
+        lons, lats = meshgrid(lon, lat)
+
+        var = ds.variables[variable]
+        var_mean = np.nanmean(var, axis=0) + delta # mean over whole periode 30 Years 1981-2010 and transform to Celsius
+
+        # prepare plot
+        LOGGER.info('preparing matplotlib figure')
+        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
+        ax = plt.axes(projection=ccrs.PlateCarree())
+
+        # extent=(-0,17,10.5,24)
+        # ax.set_extent(extent)
+
+        ax.add_feature(cfeature.BORDERS, linewidth=2, linestyle='--')
+        # ax.add_feature(cfeature.RIVERS)
+        # ax.stock_img()
+        # ax.gridlines(draw_labels=False)
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=2, color='gray', alpha=0.5, linestyle='--')
+        gl.xlabels_top = False
+        gl.ylables_right = False
+        # gl.xlines = False
+        # gl.xlocator = mticker.FixedLocator([0, 2,4,6,8,10,12,14,16] )
+        # gl.xformatter = LONGITUDE_FORMATTER
+        # gl.yformatter = LATITUDE_FORMATTER
+        gl.xlabel_style = {'size': 15, 'color': 'black'}
+        gl.ylabel_style = {'size': 15, 'color': 'black'}
+        # gl.xlabel_style = {'color': 'red', 'weight': 'bold'}
+
+        # ax.xaxis.set_ticks_position('bottom')
+        # ax.yaxis.set_ticks_position('left')
+        # ax.colorbar
+
+        plt.title(title, fontsize=20)
+
+        cs = plt.pcolormesh(lons, lats, var_mean,
+                            transform=ccrs.PlateCarree(), cmap=cmap,
+                            # vmin=20, vmax=30,
+                            )
+        plt.colorbar(cs)
+        LOGGER.info('Matplotlib pcolormesh plot done')
+
+        output_png = fig2plot(fig=fig, file_extension='png',
+                              dir_output=dir_output)
+        plt.close()
+        LOGGER.debug('Plot done for %s' % variable)
+    except Exception as err:
+        raise Exception('failed to calculate quantiles. %s' % err)
+
+    return output_png
 
 
 # def map_robustness(signal, high_agreement_mask, low_agreement_mask,
