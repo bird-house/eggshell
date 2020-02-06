@@ -338,7 +338,6 @@ def plot_map(resouce, variable,
     :returns str: path/to/file.png
     """
 
-
     try:
         LOGGER.debug('plot_map function read in values for {}'.format(resouce))
 

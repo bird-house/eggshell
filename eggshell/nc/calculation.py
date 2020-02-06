@@ -1,4 +1,5 @@
 from eggshell.nc.nc_utils import get_values, get_coordinates, get_index_lat
+# from eggshell.nc.ocg_utils import call
 from os import path
 import numpy as np
 import logging
@@ -45,87 +46,148 @@ def fieldmean(resource):
     return meanTimeserie
 
 
-def remove_mean_trend(fana, varname):
-    """
-    Removing the smooth trend from 3D netcdf file
-    """
-    from cdo import Cdo
-    from netCDF4 import Dataset
-    import uuid
-    from scipy.interpolate import UnivariateSpline
-    from os import system
+def ens_stats(resources, time_range=[None,None], dir_output=None, output_format='nc'):
 
-    if type(fana) == list:
-        fana = fana[0]
+    from ocgis import OcgOperations, RequestDataset, env
+    from os.path import basename
+    from datetime import datetime as dt
+    env.OVERWRITE = True
 
-    backup_ana = 'orig_mod_' + path.basename(fana)
+    var = 'tg_mean'
+    out_means = []
+    for resource in resources:
 
-    cdo = Cdo()
+        rd = RequestDataset(resource, var)
+        prefix = basename(resource).replace('.nc', '')
+        LOGGER.debug('processing mean of {}'.format(prefix))
+        calc = [{'func': 'median', 'name': 'median'}]  #  {'func': 'median', 'name': 'monthly_median'}
+        ops = OcgOperations(dataset=rd, calc=calc, calc_grouping=['all'],
+                            output_format=output_format, prefix='median_'+prefix, time_range=time_range)
+        out_means.append(ops.execute())
+    # nc_out = call(resource=resources, calc=[{'func': 'mean', 'name': 'ens_mean'}],
+    #               calc_grouping='all', # time_region=time_region,
+    #               dir_output=dir_output, output_format='nc')
 
-    # create backup of input file
-    # Again, an issue with cdo versioning.
-    # TODO: Fix CDO versioning workaround...
+    #####
+    # prepare fieles by copying ...
 
-    try:
-        cdo_cp = getattr(cdo, 'copy')
-        cdo_cp(input=fana, output=backup_ana)
-    except Exception:
-        if(path.isfile(backup_ana) is False):
-            com = 'copy'
-            comcdo = 'cdo -O %s %s %s' % (com, fana, backup_ana)
-            system(comcdo)
-        else:
-            backup_ana = 'None'
 
-    # create fmana - mean field
-    fmana = '%s.nc' % uuid.uuid1()
+    ####
+    # read in numpy array
 
-    cdo_op = getattr(cdo, 'fldmean')
-    cdo_op(input=fana, output=fmana)
 
-    mean_arc_dataset = Dataset(fmana)
-    mean_arcvar = mean_arc_dataset.variables[varname][:]
-    data = mean_arcvar[:, 0, 0]
-    mean_arc_dataset.close()
-    x = np.linspace(0, len(data) - 1, len(data))
-    y = data
+    ####
+    # calc median, std 
 
-    # Very slow method.
-    # TODO: sub by fast one
-    # (there is one in R, but doesn't want to add R to analogs...)
-    spl = UnivariateSpline(x, y)
 
-    smf = (len(y)) * np.var(y)
-    spl.set_smoothing_factor(smf)
-    trend = np.zeros(len(y), dtype=np.float)
-    trend[:] = spl(x)
+    ####
+    # write values to files
 
-#    orig_arc_dataset = Dataset(fana,'r+')
-    orig_arc_dataset = Dataset(fana, 'a')
-    orig_arcvar = orig_arc_dataset.variables.pop(varname)
-    orig_data = orig_arcvar[:]
+    LOGGER.info('processing the overall ensemble statistical mean ')
 
-    det = np.zeros(np.shape(orig_data), dtype=np.float)
-    det = (orig_data.T - trend).T
+    # prefix = 'ensmean_tg-mean_{}-{}'.format(dt.strftime(time_range[0], '%Y-%m-%d'),
+    #                                         dt.strftime(time_range[1], '%Y-%m-%d'))
+    # rd = RequestDataset(out_means, var)
+    # calc = [{'func': 'mean', 'name': 'mean'}]  #  {'func': 'median', 'name': 'monthly_median'}
+    # ops = OcgOperations(dataset=rd, calc=calc, calc_grouping=['all'],
+    #                     output_format=output_format, prefix='mean_'+prefix, time_range=time_range)
+    # ensmean = ops.execute()
 
-    orig_arcvar[:] = det
+    return ensmean  # median
 
-    # at = {k: orig_arcvar.getncattr(k) for k in orig_arcvar.ncattrs()}
-    maxat = np.max(det)
-    minat = np.min(det)
-    act = np.zeros((2), dtype=np.float32)
-    valid = np.zeros((2), dtype=np.float32)
-    act[0] = minat
-    act[1] = maxat
-    valid[0] = minat - abs(0.2 * minat)
-    valid[1] = maxat + abs(0.2 * maxat)
-    act_attr = {}
-    val_attr = {}
 
-    act_attr['actual_range'] = act
-    val_attr['valid_range'] = valid
-    orig_arcvar.setncatts(act_attr)
-    orig_arcvar.setncatts(val_attr)
-    orig_arc_dataset.close()
+# call(resource=[], variable=None, dimension_map=None, agg_selection=True,
+#          calc=None, calc_grouping=None, conform_units_to=None, crs=None,
+#          memory_limit=None, prefix=None,
+#          regrid_destination=None, regrid_options='bil', level_range=None,  # cdover='python',
+#          geom=None, output_format_options=None, search_radius_mult=2.,
+#          select_nearest=False, select_ugid=None, spatial_wrapping=None,
+#          t_calendar=None, time_region=None,
+#          time_range=None, dir_output=None, output_format='nc'):
 
-    return backup_ana
+
+# CDO is disabled ...
+# def remove_mean_trend(fana, varname):
+#     """
+#     Removing the smooth trend from 3D netcdf file
+#     """
+#     from cdo import Cdo
+#     from netCDF4 import Dataset
+#     import uuid
+#     from scipy.interpolate import UnivariateSpline
+#     from os import system
+#
+#     if type(fana) == list:
+#         fana = fana[0]
+#
+#     backup_ana = 'orig_mod_' + path.basename(fana)
+#
+#     cdo = Cdo()
+#
+#     # create backup of input file
+#     # Again, an issue with cdo versioning.
+#     # TODO: Fix CDO versioning workaround...
+#
+#     try:
+#         cdo_cp = getattr(cdo, 'copy')
+#         cdo_cp(input=fana, output=backup_ana)
+#     except Exception:
+#         if(path.isfile(backup_ana) is False):
+#             com = 'copy'
+#             comcdo = 'cdo -O %s %s %s' % (com, fana, backup_ana)
+#             system(comcdo)
+#         else:
+#             backup_ana = 'None'
+#
+#     # create fmana - mean field
+#     fmana = '%s.nc' % uuid.uuid1()
+#
+#     cdo_op = getattr(cdo, 'fldmean')
+#     cdo_op(input=fana, output=fmana)
+#
+#     mean_arc_dataset = Dataset(fmana)
+#     mean_arcvar = mean_arc_dataset.variables[varname][:]
+#     data = mean_arcvar[:, 0, 0]
+#     mean_arc_dataset.close()
+#     x = np.linspace(0, len(data) - 1, len(data))
+#     y = data
+#
+#     # Very slow method.
+#     # TODO: sub by fast one
+#     # (there is one in R, but doesn't want to add R to analogs...)
+#     spl = UnivariateSpline(x, y)
+#
+#     smf = (len(y)) * np.var(y)
+#     spl.set_smoothing_factor(smf)
+#     trend = np.zeros(len(y), dtype=np.float)
+#     trend[:] = spl(x)
+#
+# #    orig_arc_dataset = Dataset(fana,'r+')
+#     orig_arc_dataset = Dataset(fana, 'a')
+#     orig_arcvar = orig_arc_dataset.variables.pop(varname)
+#     orig_data = orig_arcvar[:]
+#
+#     det = np.zeros(np.shape(orig_data), dtype=np.float)
+#     det = (orig_data.T - trend).T
+#
+#     orig_arcvar[:] = det
+#
+#     # at = {k: orig_arcvar.getncattr(k) for k in orig_arcvar.ncattrs()}
+#     maxat = np.max(det)
+#     minat = np.min(det)
+#     act = np.zeros((2), dtype=np.float32)
+#     valid = np.zeros((2), dtype=np.float32)
+#     act[0] = minat
+#     act[1] = maxat
+#     valid[0] = minat - abs(0.2 * minat)
+#     valid[1] = maxat + abs(0.2 * maxat)
+#     act_attr = {}
+#     val_attr = {}
+#
+#     act_attr['actual_range'] = act
+#     val_attr['valid_range'] = valid
+#     orig_arcvar.setncatts(act_attr)
+#     orig_arcvar.setncatts(val_attr)
+#     orig_arc_dataset.close()
+#
+#     return backup_ana
