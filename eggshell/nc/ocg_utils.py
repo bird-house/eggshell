@@ -72,8 +72,8 @@ def call(resource=[], variable=None, dimension_map=None, agg_selection=True,
     :param spatial_wrapping: how to handle coordinates in case of subsets, options: None (default), 'wrap', 'unwrap'
     :param time_region: select single month
     :param time_range: sequence of two datetime.datetime objects to mark start and end point
-    :param dir_output (default= curdir):
-    :param output_format:
+    :param dir_output: path to folder to store ouput files  (default= curdir)
+    :param output_format: format in which results will be returned.
     :return: output file path
     """
     LOGGER.info('Start ocgis module call function')

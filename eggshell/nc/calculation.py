@@ -1,6 +1,11 @@
-from eggshell.nc.nc_utils import get_values, get_coordinates, get_index_lat
+from eggshell.nc.nc_utils import get_values, get_coordinates, get_index_lat, get_variable
 # from eggshell.nc.ocg_utils import call
 from os import path
+from os.path import basename, join
+from datetime import datetime as dt
+from shutil import copyfile
+from netCDF4 import Dataset
+
 import numpy as np
 import logging
 LOGGER = logging.getLogger("PYWPS")
@@ -45,13 +50,73 @@ def fieldmean(resource):
         LOGGER.error('not 3D shaped data. Average can not be calculated')
     return meanTimeserie
 
-def robustness_stats(resources, time_range=[None,None], dir_output=None, output_format='nc'):
+def robustness_cc_signal(variable_mean, standard_deviation=None):
+    """
+    Claculating the Climate Change signal based on the output of robustness_stats.
+
+    :param variable_mean: list of two 2D spatial netCDF files
+                          in the order of [refenence, projection]
+    :param standard_deviation: according to variable_mean files 2D netCDF files of the standard deviation
+
+    :return  netCDF files: cc_signal.nc, mean_std.nc
+    """
+
+    basename_ref = basename(variable_mean[0]).split('_')
+    basename_proj = basename(variable_mean[1]).split('_')
+    # ensstd_tg_mean_1981-01-01-2010-12-31.nc'
+
+    var_name = get_variable(variable_mean[0])
+    ds = Dataset(variable_mean[0])
+    vals_ref = np.squeeze(ds[var_name][:])
+    ds.close()
+
+    ds = Dataset(variable_mean[1])
+    vals_proj = np.squeeze(ds[var_name][:])
+    ds.close()
+
+    if standard_deviation != None:
+        ds = Dataset(standard_deviation[0])
+        std_ref = np.squeeze(ds[var_name][:])
+        ds.close()
+
+        ds = Dataset(standard_deviation[1])
+        std_proj = np.squeeze(ds[var_name][:])
+        ds.close()
+
+        bn_mean_std = 'mean-std_{}_{}_{}'.format(basename_ref[1], basename_ref[-2], basename_proj[-1])
+        out_mean_std = copyfile(standard_deviation[0], bn_mean_std)
+
+        ds_mean_std = Dataset(out_mean_std, mode='a')
+        ds_mean_std[var_name][:] = (std_ref + std_proj) / 2
+        ds_mean_std.close()
+
+    else:
+        out_mean_std = None
+
+
+    bn_cc_signal = 'cc-signal_{}_{}_{}'.format(basename_ref[1], basename_ref[-2], basename_proj[-1])
+
+    out_cc_signal = copyfile(variable_mean[0], bn_cc_signal)
+
+    ds_cc = Dataset(out_cc_signal, mode='a')
+    ds_cc[var_name][:] = np.squeeze(vals_proj - vals_ref)
+    ds_cc.close()
+
+    return out_cc_signal, out_mean_std
+
+def robustness_stats(resources, time_range=[None, None], dir_output=None):
+    """
+    calculating the spatial mean and corresponding standard deviation for an ensemble of consistent datasets containing one variableself.
+    If a time range is given the statistical values are calculated only in the disired timeperiod.
+
+    :param resources: str or list of str containing the netCDF files paths
+    :param time_range: sequence of two datetime.datetime objects to mark start and end point
+    :param dir_output: path to folder to store ouput files  (default= curdir)
+
+    :return netCDF files: out_ensmean.nc, out_ensstd.nc
+    """
 
     from ocgis import OcgOperations, RequestDataset, env
-    from os.path import basename, join
-    from datetime import datetime as dt
-    from shutil import copyfile
-    from netCDF4 import Dataset
     env.OVERWRITE = True
 
     var_name = 'tg_mean'
@@ -63,7 +128,7 @@ def robustness_stats(resources, time_range=[None,None], dir_output=None, output_
         LOGGER.debug('processing mean of {}'.format(prefix))
         calc = [{'func': 'mean', 'name': var_name}]  #  {'func': 'median', 'name': 'monthly_median'}
         ops = OcgOperations(dataset=rd, calc=calc, calc_grouping=['all'],
-                            output_format=output_format, prefix='median_'+prefix, time_range=time_range)
+                            output_format='nc', prefix='median_'+prefix, time_range=time_range)
         out_means.append(ops.execute())
     # nc_out = call(resource=resources, calc=[{'func': 'mean', 'name': 'ens_mean'}],
     #               calc_grouping='all', # time_region=time_region,
@@ -92,11 +157,11 @@ def robustness_stats(resources, time_range=[None,None], dir_output=None, output_
 
     #####
     # prepare files by copying ...
-    ensmean_file = 'ensmean_{}_{}-{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
+    ensmean_file = 'ensmean_{}_{}_{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
                                                 dt.strftime(time_range[1], '%Y-%m-%d'))
     out_ensmean = copyfile(out_means[0], join(dir_output, ensmean_file))
 
-    ensstd_file = 'ensstd_{}_{}-{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
+    ensstd_file = 'ensstd_{}_{}_{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
                                               dt.strftime(time_range[1], '%Y-%m-%d'))
     out_ensstd = copyfile(out_means[0], join(dir_output, ensstd_file))
 
