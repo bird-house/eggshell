@@ -45,22 +45,23 @@ def fieldmean(resource):
         LOGGER.error('not 3D shaped data. Average can not be calculated')
     return meanTimeserie
 
-
-def ens_stats(resources, time_range=[None,None], dir_output=None, output_format='nc'):
+def robustness_stats(resources, time_range=[None,None], dir_output=None, output_format='nc'):
 
     from ocgis import OcgOperations, RequestDataset, env
-    from os.path import basename
+    from os.path import basename, join
     from datetime import datetime as dt
+    from shutil import copyfile
+    from netCDF4 import Dataset
     env.OVERWRITE = True
 
-    var = 'tg_mean'
+    var_name = 'tg_mean'
     out_means = []
     for resource in resources:
 
-        rd = RequestDataset(resource, var)
+        rd = RequestDataset(resource, var_name)
         prefix = basename(resource).replace('.nc', '')
         LOGGER.debug('processing mean of {}'.format(prefix))
-        calc = [{'func': 'median', 'name': 'median'}]  #  {'func': 'median', 'name': 'monthly_median'}
+        calc = [{'func': 'mean', 'name': var_name}]  #  {'func': 'median', 'name': 'monthly_median'}
         ops = OcgOperations(dataset=rd, calc=calc, calc_grouping=['all'],
                             output_format=output_format, prefix='median_'+prefix, time_range=time_range)
         out_means.append(ops.execute())
@@ -68,21 +69,46 @@ def ens_stats(resources, time_range=[None,None], dir_output=None, output_format=
     #               calc_grouping='all', # time_region=time_region,
     #               dir_output=dir_output, output_format='nc')
 
-    #####
-    # prepare fieles by copying ...
-
-
     ####
     # read in numpy array
 
+    for i, out_mean in enumerate(out_means):
+        if i == 0:
+            ds = Dataset(out_mean)
+            var = ds[var_name][:]
+            dims = [len(out_means), var[:].shape[-2], var[:].shape[-1]]
+            vals = np.empty(dims)
+            vals[i, :, :] = np.squeeze(var[:])
+            ds.close()
+        else:
+            ds = Dataset(out_mean)
+            vals[i, :, :] = np.squeeze(ds[var_name][:])
+            ds.close()
 
     ####
-    # calc median, std 
+    # calc median, std
+    val_mean = np.nanmean(vals, axis=0)
+    val_std = np.nanstd(vals, axis=0)
 
+    #####
+    # prepare files by copying ...
+    ensmean_file = 'ensmean_{}_{}-{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
+                                                dt.strftime(time_range[1], '%Y-%m-%d'))
+    out_ensmean = copyfile(out_means[0], join(dir_output, ensmean_file))
+
+    ensstd_file = 'ensstd_{}_{}-{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
+                                              dt.strftime(time_range[1], '%Y-%m-%d'))
+    out_ensstd = copyfile(out_means[0], join(dir_output, ensstd_file))
 
     ####
     # write values to files
+    ds_mean = Dataset(out_ensmean, mode='a')
+    ds_mean[var_name][:] = val_mean
+    ds_mean.close()
 
+    ds_std = Dataset(out_ensstd, mode='a')
+    ds_std[var_name][:] = val_std
+    ds_mean.close()
     LOGGER.info('processing the overall ensemble statistical mean ')
 
     # prefix = 'ensmean_tg-mean_{}-{}'.format(dt.strftime(time_range[0], '%Y-%m-%d'),
@@ -93,7 +119,7 @@ def ens_stats(resources, time_range=[None,None], dir_output=None, output_format=
     #                     output_format=output_format, prefix='mean_'+prefix, time_range=time_range)
     # ensmean = ops.execute()
 
-    return ensmean  # median
+    return out_ensmean, out_ensstd
 
 
 # call(resource=[], variable=None, dimension_map=None, agg_selection=True,
