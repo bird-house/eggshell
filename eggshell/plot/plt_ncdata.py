@@ -8,6 +8,7 @@ from tempfile import mkstemp
 import numpy as np
 
 from matplotlib import pyplot as plt
+from matplotlib import colors
 from matplotlib.patches import Polygon
 import matplotlib.patches as mpatches
 import cartopy.feature as cfeature
@@ -26,6 +27,18 @@ import numpy as np
 
 import logging
 LOGGER = logging.getLogger("PYWPS")
+
+
+class MidpointNormalize(colors.Normalize):
+    def __init__(self, vmin=None, vmax=None, vcenter=None, clip=False):
+        self.vcenter = vcenter
+        colors.Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        # I'm ignoring masked values and all kinds of edge cases to make a
+        # simple example...
+        x, y = [self.vmin, self.vcenter, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y))
 
 
 def plot_extend(resource, file_extension='png'):
@@ -398,95 +411,160 @@ def plot_map(resouce, variable,
     return output_png
 
 
-# def map_robustness(signal, high_agreement_mask, low_agreement_mask,
-#                    variable=None, cmap='seismic', title=None,
-#                    file_extension='png'):
-#     """
-#     generates a graphic for the output of the ensembleRobustness process for a lat/long file.
-#
-#     :param signal: netCDF file containing the signal difference over time
-#     :param highagreement:
-#     :param lowagreement:
-#     :param variable:
-#     :param cmap: default='seismic',
-#     :param title: default='Model agreement of signal'
-#     :returns str: path/to/file.png
-#     """
-#     # from flyingpigeon import utils
-#     from eggshell.general import utils
-#     from numpy import mean, ma
-#
-#     if variable is None:
-#         variable = get_variable(signal)
-#
-#     try:
-#         var_signal = get_values(signal)
-#         mask_l = get_values(low_agreement_mask)
-#         mask_h = get_values(high_agreement_mask)
-#
-#         # mask_l = ma.masked_where(low < 0.5, low)
-#         # mask_h = ma.masked_where(high < 0.5, high)
-#         # mask_l[mask_l == 0] = np.nan
-#         # mask_h[mask_h == 0] = np.nan
-#
-#         LOGGER.info('data loaded')
-#
-#         lats, lons = get_coordinates(signal, unrotate=True)
-#
-#         if len(lats.shape) == 1:
-#             cyclic_var, cyclic_lons = add_cyclic_point(var_signal, coord=lons)
-#             mask_l, cyclic_lons = add_cyclic_point(mask_l, coord=lons)
-#             mask_h, cyclic_lons = add_cyclic_point(mask_h, coord=lons)
-#
-#             lons = cyclic_lons.data
-#             var_signal = cyclic_var
-#
-#         LOGGER.info('lat lon loaded')
-#
-#         minval = round(np.nanmin(var_signal))
-#         maxval = round(np.nanmax(var_signal)+.5)
-#
-#         LOGGER.info('prepared data for plotting')
-#     except:
-#         msg = 'failed to get data for plotting'
-#         LOGGER.exception(msg)
-#         raise Exception(msg)
-#
-#     try:
-#         fig = plt.figure(facecolor='w', edgecolor='k')
-#
-#         ax = plt.axes(projection=ccrs.Robinson(central_longitude=int(mean(lons))))
-#         norm = MidpointNormalize(midpoint=0)
-#
-#         cs = plt.contourf(lons, lats, var_signal, 60, norm=norm, transform=ccrs.PlateCarree(),
-#                           cmap=cmap, interpolation='nearest')
-#
-#         cl = plt.contourf(lons, lats, mask_l, 1, transform=ccrs.PlateCarree(), colors='none', hatches=[None, '/'])
-#         ch = plt.contourf(lons, lats, mask_h, 1, transform=ccrs.PlateCarree(), colors='none', hatches=[None, '.'])
-#         # artists, labels = ch.legend_elements()
-#         # plt.legend(artists, labels, handleheight=2)
-#         # plt.clim(minval,maxval)
-#         ax.coastlines()
-#         ax.gridlines()
-#         # ax.set_global()
-#
-#         if title is None:
-#             plt.title('%s with Agreement' % variable)
-#         else:
-#             plt.title(title)
-#         plt.colorbar(cs)
-#
-#         plt.annotate('// = low model ensemble agreement', (0, 0), (0, -10),
-#                      xycoords='axes fraction', textcoords='offset points', va='top')
-#         plt.annotate('..  = high model ensemble agreement', (0, 0), (0, -20),
-#                      xycoords='axes fraction', textcoords='offset points', va='top')
-#
-#         graphic = fig2plot(fig=fig, file_extension=file_extension)
-#         plt.close()
-#
-#         LOGGER.info('Plot created and figure saved')
-#     except:
-#         msg = 'failed to plot graphic'
-#         LOGGER.exception(msg)
-#
-#     return graphic
+def plot_map_ccsignal(signal, standard_deviation=None,
+                   variable=None, cmap='Reds', title=None,
+                   file_extension='png'):  # 'seismic'
+    """
+    generates a graphic for the output of the ensembleRobustness process for a lat/long file.
+
+    :param signal: netCDF file containing the signal difference over time
+    :param standard_deviation:
+    :param variable: variable containing the netCDF files
+    :param cmap: default='seismic',
+    :param title: default='Model agreement of signal'
+    :returns str: path/to/file.png
+    """
+    # from flyingpigeon import utils
+
+    from numpy import mean, ma
+
+    if variable is None:
+        variable = get_variable(signal)
+
+    print('found variable in file {}'.format(variable))
+
+    try:
+        ds = Dataset(signal)
+        var_signal = ds.variables[variable]
+        val_signal = np.squeeze(ds.variables[variable])
+
+        lon_att = var_signal.dimensions[-1]
+        lat_att = var_signal.dimensions[-2]
+
+        lon = ds.variables[lon_att][:]
+        lat = ds.variables[lat_att][:]
+
+        lons, lats = meshgrid(lon, lat)
+        ds.close()
+
+        if standard_deviation != None:
+            ds = Dataset(standard_deviation)
+            val_std = np.squeeze(ds.variables[variable][:])
+            ds.close()
+
+            #  mask = val_signal[:]  #  [val_signal[:]<val_std[:]]
+
+            mask_h = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
+            mask_h[(val_signal >= (val_std / 2))] = 1   #[:]
+
+            mask_l = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
+            mask_l[val_signal < (val_std / 2)] = 1
+
+
+            # cyclic_var, cyclic_lons = add_cyclic_point(var_signal, coord=lons)
+            # mask, cyclic_lons = add_cyclic_point(mask, coord=lons)
+            #
+            # lons = cyclic_lons
+            # var_signal = cyclic_var
+
+        LOGGER.info('read in values')
+        #
+        # lats, lons = get_coordinates(signal, unrotate=True)
+        #
+        # if len(lats.shape) == 1:
+        #     cyclic_var, cyclic_lons = add_cyclic_point(var_signal, coord=lons)
+        #     mask_l, cyclic_lons = add_cyclic_point(mask_l, coord=lons)
+        #     mask_h, cyclic_lons = add_cyclic_point(mask_h, coord=lons)
+        #
+        #     lons = cyclic_lons.data
+        #     var_signal = cyclic_var
+        #
+        # LOGGER.info('lat lon loaded')
+
+        LOGGER.info('prepared data for plotting')
+    except Exception as e:
+        msg = 'failed to get data for plotting: {}'.format(e)
+        LOGGER.exception(msg)
+        raise Exception(msg)
+
+    try:
+        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
+        ax = plt.axes(projection=ccrs.PlateCarree())
+        # ax = plt.axes(projection=ccrs.Robinson(central_longitude=int(mean(lons))))
+
+        # minval = round(np.nanmin(var_signal))
+        maxval = round(np.nanmax(val_signal)+.5)
+        norm = MidpointNormalize(  vmax=maxval)  # midpoint=0) vmin=. vcenter=0,,
+
+        cs = plt.pcolormesh(lons, lats, val_signal, transform=ccrs.PlateCarree(), cmap=cmap, vmin=0,)    #norm=norm, vmin=0, vmax=maxval
+                #  60,
+        plt.colorbar(cs)
+
+        if standard_deviation != None:
+            ch = plt.contourf(lons, lats, mask_h, transform=ccrs.PlateCarree(), hatches=['/', '.'], alpha=0, colors='none', cmap=None)    # colors='white'
+            # cl = plt.contourf(lons, lats, mask_l, 1, transform=ccrs.PlateCarree(), hatches=[None, '/'], alpha=0, colors='none', cmap=None)     # ,
+
+            plt.annotate('// = low model ensemble agreement', (0, 0), (0, -10),
+                         xycoords='axes fraction', textcoords='offset points', va='top')
+            plt.annotate('..  = high model ensemble agreement', (0, 0), (0, -20),
+                         xycoords='axes fraction', textcoords='offset points', va='top')
+
+        # ch = plt.contourf(lons, lats, mask, 1, transform=ccrs.PlateCarree(), colors='none', hatches=[None,'.' ])
+
+        ax.add_feature(cfeature.BORDERS, linewidth=2, linestyle='--')
+        ax.add_feature(cfeature.COASTLINE, linewidth=2,) #  coastlines()
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
+                          linewidth=2, color='gray', alpha=0.5, linestyle='--')
+        gl.xlabels_top = False
+        gl.ylables_right = False
+        gl.xlabel_style = {'size': 15, 'color': 'black'}
+        gl.ylabel_style = {'size': 15, 'color': 'black'}
+
+        if title != None:
+            plt.title(title, fontsize=20 )
+
+
+        # # artists, labels = ch.legend_elements()
+        # # plt.legend(artists, labels, handleheight=2)
+        # plt.clim(minval,maxval)
+        #
+        # ax.gridlines()
+        # # ax.set_global()
+        #
+        #
+        # else:
+        #     plt.title(title)
+        # plt.colorbar(cs)
+
+        graphic = fig2plot(fig=fig, file_extension=file_extension)
+        plt.close()
+
+        LOGGER.info('Plot created and figure saved')
+    except:
+        msg = 'failed to plot graphic'
+        LOGGER.exception(msg)
+
+    return graphic
+
+
+
+
+
+            # extent=(-0,17,10.5,24)
+            # ax.set_extent(extent)
+
+
+            # ax.add_feature(cfeature.RIVERS)
+            # ax.stock_img()
+            # ax.gridlines(draw_labels=False)
+
+            # gl.xlines = False
+            # gl.xlocator = mticker.FixedLocator([0, 2,4,6,8,10,12,14,16] )
+            # gl.xformatter = LONGITUDE_FORMATTER
+            # gl.yformatter = LATITUDE_FORMATTER
+
+            # gl.xlabel_style = {'color': 'red', 'weight': 'bold'}
+
+            # ax.xaxis.set_ticks_position('bottom')
+            # ax.yaxis.set_ticks_position('left')
+            # ax.colorbar
