@@ -278,7 +278,7 @@ def sort_by_filename(resource, historical_concatination=False):
     if type(resource) == str:
         resource = [resource]
 
-    ndic = {}
+    nc_datasets = {}
     tmp_dic = {}
 
     try:
@@ -293,23 +293,25 @@ def sort_by_filename(resource, historical_concatination=False):
                     n = f.split('_')
                     if len([int(i) for i in n[-1].split('-') if i.isdigit()]) == 2:
                         bn = '_'.join(n[0:-1])  # skipping the date information in the filename
-                        ndic[bn] = []  # dictionary containing all datasets names
+                        nc_datasets[bn] = []  # dictionary containing all datasets names
                     elif len([int(i) for i in n[-2].split('-') if i.isdigit()]) == 2:
                         bn = '_'.join(n[0:-2])  # skipping the date information in the filename
-                        ndic[bn] = []  # dictionary containing all datasets names
+                        nc_datasets[bn] = []  # dictionary containing all datasets names
                     else:
                         LOGGER.exception('file is not DRS convention conform!')
-                LOGGER.info('found %s datasets', len(ndic.keys()))
+                LOGGER.info('found %s datasets', len(nc_datasets.keys()))
             except Exception:
                 LOGGER.exception('failed to find names of datasets!')
             LOGGER.info('check for historical/RCP datasets')
             try:
                 if historical_concatination is True:
                     # select only necessary names
-                    if any("_rcp" in s for s in ndic.keys()):
-                        for key in ndic.keys():
+                    rcp_datasets = nc_datasets.copy()
+                    if any("_rcp" in s for s in nc_datasets.keys()):
+                        for key in nc_datasets.keys():
                             if 'historical' in key:
-                                ndic.pop(key)
+                                rcp_datasets.pop(key)
+                        nc_datasets = rcp_datasets.copy()
                         LOGGER.info('historical data set names removed from dictionary')
                     else:
                         LOGGER.info('no RCP dataset names found in dictionary')
@@ -317,12 +319,12 @@ def sort_by_filename(resource, historical_concatination=False):
                 LOGGER.exception('failed to pop historical data set names!')
             LOGGER.info('start sorting the files')
             try:
-                for key in ndic:
+                for key in nc_datasets:
                     try:
                         if historical_concatination is False:
                             for n in resource:
                                 if '%s_' % key in n:
-                                    ndic[key].append(path.abspath(n))  # path.join(p, n))
+                                    nc_datasets[key].append(path.abspath(n))  # path.join(p, n))
 
                         elif historical_concatination is True:
                             key_hist = key.replace('rcp26', 'historical').\
@@ -331,25 +333,25 @@ def sort_by_filename(resource, historical_concatination=False):
                                 replace('rcp85', 'historical')
                             for n in resource:
                                 if '%s_' % key in n or '%s_' % key_hist in n:
-                                    ndic[key].append(path.abspath(n))  # path.join(p, n))
+                                    nc_datasets[key].append(path.abspath(n))  # path.join(p, n))
                         else:
                             LOGGER.error('append file paths to dictionary for key %s failed' % key)
-                        ndic[key].sort()
+                        nc_datasets[key].sort()
                     except Exception:
                         LOGGER.exception('failed for %s ' % key)
             except Exception:
                 LOGGER.exception('failed to populate the dictionary with appropriate files')
-            for key in ndic.keys():
+            for key in nc_datasets.keys():
                 try:
-                    ndic[key].sort()
-                    start, _ = get_timerange(ndic[key][0])  # get first timestep of first file
-                    _ , end = get_timerange(ndic[key][-1])  # get last  timestep of last file 
+                    nc_datasets[key].sort()
+                    start, _ = get_timerange(nc_datasets[key][0])  # get first timestep of first file
+                    _ , end = get_timerange(nc_datasets[key][-1])  # get last  timestep of last file
                     newkey = key + '_' + start + '-' + end
-                    tmp_dic[newkey] = ndic[key]
+                    tmp_dic[newkey] = nc_datasets[key]
                 except Exception:
                     msg = 'failed to sort the list of resources and add dates to keyname: %s' % key
                     LOGGER.exception(msg)
-                    tmp_dic[key] = ndic[key]
+                    tmp_dic[key] = nc_datasets[key]
                     # raise Exception(msg)
         elif len(resource) == 1:
             p, f = path.split(path.abspath(resource[0]))
@@ -357,7 +359,7 @@ def sort_by_filename(resource, historical_concatination=False):
             LOGGER.debug('only one file! Nothing to sort, resource is passed into dictionary')
         else:
             LOGGER.debug('sort_by_filename module failed: resource is not 1 or >1')
-        LOGGER.info('sort_by_filename module done: %s datasets found' % len(ndic))
+        LOGGER.info('sort_by_filename module done: %s datasets found' % len(nc_datasets))
     except Exception:
         msg = 'failed to sort files by filename'
         LOGGER.exception(msg)

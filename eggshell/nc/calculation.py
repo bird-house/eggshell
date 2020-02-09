@@ -50,7 +50,8 @@ def fieldmean(resource):
         LOGGER.error('not 3D shaped data. Average can not be calculated')
     return meanTimeserie
 
-def robustness_cc_signal(variable_mean, standard_deviation=None):
+
+def robustness_cc_signal(variable_mean, standard_deviation=None, variable=None):
     """
     Claculating the Climate Change signal based on the output of robustness_stats.
 
@@ -65,30 +66,32 @@ def robustness_cc_signal(variable_mean, standard_deviation=None):
     basename_proj = basename(variable_mean[1]).split('_')
     # ensstd_tg_mean_1981-01-01-2010-12-31.nc'
 
-    var_name = get_variable(variable_mean[0])
+    if variable is None:
+        variable = get_variable(variable_mean[0])
+
     ds = Dataset(variable_mean[0])
-    vals_ref = np.squeeze(ds[var_name][:])
+    vals_ref = np.squeeze(ds[variable][:])
     ds.close()
 
     ds = Dataset(variable_mean[1])
-    vals_proj = np.squeeze(ds[var_name][:])
+    vals_proj = np.squeeze(ds[variable][:])
     ds.close()
 
-    if standard_deviation != None:
+    if standard_deviation is not None:
         ds = Dataset(standard_deviation[0])
-        std_ref = np.squeeze(ds[var_name][:])
+        std_ref = np.squeeze(ds[variable][:])
         ds.close()
 
         ds = Dataset(standard_deviation[1])
-        std_proj = np.squeeze(ds[var_name][:])
+        std_proj = np.squeeze(ds[variable][:])
         ds.close()
 
         bn_mean_std = 'mean-std_{}_{}_{}'.format(basename_ref[1], basename_ref[-2], basename_proj[-1])
         out_mean_std = copyfile(standard_deviation[0], bn_mean_std)
 
-        ds_mean_std = Dataset(out_mean_std, mode='a')
-        ds_mean_std[var_name][:] = (std_ref + std_proj) / 2
-        ds_mean_std.close()
+        ds_median_std = Dataset(out_mean_std, mode='a')
+        ds_median_std[variable][:] = (std_ref + std_proj) / 2
+        ds_median_std.close()
 
     else:
         out_mean_std = None
@@ -99,12 +102,12 @@ def robustness_cc_signal(variable_mean, standard_deviation=None):
     out_cc_signal = copyfile(variable_mean[0], bn_cc_signal)
 
     ds_cc = Dataset(out_cc_signal, mode='a')
-    ds_cc[var_name][:] = np.squeeze(vals_proj - vals_ref)
+    ds_cc[variable][:] = np.squeeze(vals_proj - vals_ref)
     ds_cc.close()
 
     return out_cc_signal, out_mean_std
 
-def robustness_stats(resources, time_range=[None, None], dir_output=None):
+def robustness_stats(resources, time_range=[None, None], dir_output=None, variable=None):
     """
     calculating the spatial mean and corresponding standard deviation for an ensemble of consistent datasets containing one variableself.
     If a time range is given the statistical values are calculated only in the disired timeperiod.
@@ -112,6 +115,7 @@ def robustness_stats(resources, time_range=[None, None], dir_output=None):
     :param resources: str or list of str containing the netCDF files paths
     :param time_range: sequence of two datetime.datetime objects to mark start and end point
     :param dir_output: path to folder to store ouput files  (default= curdir)
+    :param variable: variable name containing in netCDF file. If not set, variable name gets detected
 
     :return netCDF files: out_ensmean.nc, out_ensstd.nc
     """
@@ -119,16 +123,18 @@ def robustness_stats(resources, time_range=[None, None], dir_output=None):
     from ocgis import OcgOperations, RequestDataset, env
     env.OVERWRITE = True
 
-    var_name = 'tg_mean'
+    if variable is None:
+        variable = get_variable(resources[0])
+
     out_means = []
     for resource in resources:
 
-        rd = RequestDataset(resource, var_name)
+        rd = RequestDataset(resource, variable)
         prefix = basename(resource).replace('.nc', '')
         LOGGER.debug('processing mean of {}'.format(prefix))
-        calc = [{'func': 'mean', 'name': var_name}]  #  {'func': 'median', 'name': 'monthly_median'}
+        calc = [{'func': 'median', 'name': variable}]  #  {'func': 'median', 'name': 'monthly_median'}
         ops = OcgOperations(dataset=rd, calc=calc, calc_grouping=['all'],
-                            output_format='nc', prefix='median_'+prefix, time_range=time_range)
+                            output_format='nc', prefix='median_'+prefix, time_range=time_range, dir_output=dir_output)
         out_means.append(ops.execute())
     # nc_out = call(resource=resources, calc=[{'func': 'mean', 'name': 'ens_mean'}],
     #               calc_grouping='all', # time_region=time_region,
@@ -140,40 +146,40 @@ def robustness_stats(resources, time_range=[None, None], dir_output=None):
     for i, out_mean in enumerate(out_means):
         if i == 0:
             ds = Dataset(out_mean)
-            var = ds[var_name][:]
+            var = ds[variable][:]
             dims = [len(out_means), var[:].shape[-2], var[:].shape[-1]]
             vals = np.empty(dims)
             vals[i, :, :] = np.squeeze(var[:])
             ds.close()
         else:
             ds = Dataset(out_mean)
-            vals[i, :, :] = np.squeeze(ds[var_name][:])
+            vals[i, :, :] = np.squeeze(ds[variable][:])
             ds.close()
 
     ####
     # calc median, std
-    val_mean = np.nanmean(vals, axis=0)
+    val_median = np.nanmedian(vals, axis=0)
     val_std = np.nanstd(vals, axis=0)
 
     #####
     # prepare files by copying ...
-    ensmean_file = 'ensmean_{}_{}_{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
+    ensmean_file = 'ensmean_{}_{}_{}.nc'.format(variable, dt.strftime(time_range[0], '%Y-%m-%d'),
                                                 dt.strftime(time_range[1], '%Y-%m-%d'))
     out_ensmean = copyfile(out_means[0], join(dir_output, ensmean_file))
 
-    ensstd_file = 'ensstd_{}_{}_{}.nc'.format(var_name, dt.strftime(time_range[0], '%Y-%m-%d'),
+    ensstd_file = 'ensstd_{}_{}_{}.nc'.format(variable, dt.strftime(time_range[0], '%Y-%m-%d'),
                                               dt.strftime(time_range[1], '%Y-%m-%d'))
     out_ensstd = copyfile(out_means[0], join(dir_output, ensstd_file))
 
     ####
     # write values to files
-    ds_mean = Dataset(out_ensmean, mode='a')
-    ds_mean[var_name][:] = val_mean
-    ds_mean.close()
+    ds_median = Dataset(out_ensmean, mode='a')
+    ds_median[variable][:] = val_median
+    ds_median.close()
 
     ds_std = Dataset(out_ensstd, mode='a')
-    ds_std[var_name][:] = val_std
-    ds_mean.close()
+    ds_std[variable][:] = val_std
+    ds_std.close()
     LOGGER.info('processing the overall ensemble statistical mean ')
 
     # prefix = 'ensmean_tg-mean_{}-{}'.format(dt.strftime(time_range[0], '%Y-%m-%d'),

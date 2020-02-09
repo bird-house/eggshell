@@ -28,7 +28,6 @@ import numpy as np
 import logging
 LOGGER = logging.getLogger("PYWPS")
 
-
 class MidpointNormalize(colors.Normalize):
     def __init__(self, vmin=None, vmax=None, vcenter=None, clip=False):
         self.vcenter = vcenter
@@ -84,11 +83,11 @@ def plot_extend(resource, file_extension='png'):
     return map_graphic
 
 
-def spaghetti(resouces, variable=None, title=None, file_extension='png', dir_output='.'):
+def spaghetti(resource, variable=None, title=None, file_extension='png', dir_output='.'):
     """
     creates a png file containing the appropriate spaghetti plot as a field mean of the values.
 
-    :param resouces: list of files containing the same variable
+    :param resource: list of files containing the same variable
     :param variable: variable to be visualised. If None (default), variable will be detected
     :param title: string to be used as title
 
@@ -101,10 +100,10 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png', dir_out
         LOGGER.debug('Start visualisation spaghetti plot')
 
         # === prepare invironment
-        if type(resouces) != list:
-            resouces = [resouces]
+        if type(resource) != list:
+            resource = [resource]
         if variable is None:
-            variable = get_variable(resouces[0])
+            variable = get_variable(resource[0])
         if title is None:
             title = "Field mean of %s " % variable
 
@@ -114,7 +113,7 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png', dir_out
         LOGGER.exception(msg)
         raise Exception(msg)
     try:
-        for c, nc in enumerate(resouces):
+        for c, nc in enumerate(resource):
             try:
                 # dt = get_time(nc)
                 # ts = fieldmean(nc)
@@ -162,11 +161,11 @@ def spaghetti(resouces, variable=None, title=None, file_extension='png', dir_out
     return output_png
 
 
-def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='png', window=None, dir_output='.'):
+def uncertainty(resource, variable=None, ylim=None, title=None, file_extension='png', window=None, dir_output='.'):
     """
     creates a png file containing the appropriate uncertainty plot.
 
-    :param resouces: list of files containing the same variable
+    :param resource: list of files containing the same variable
     :param variable: variable to be visualised. If None (default), variable will be detected
     :param title: string to be used as title
     :param window: windowsize of the rolling mean
@@ -184,79 +183,101 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
     # from flyingpigeon.metadata import get_frequency
 
     # === prepare invironment
-    if type(resouces) == str:
-        resouces = list([resouces])
+    if type(resource) == str:
+        resource = list([resource])
     if variable is None:
-        variable = get_variable(resouces[0])
+        variable = get_variable(resource[0])
     if title is None:
         title = "Field mean of %s " % variable
 
+    LOGGER.info('variable %s found in resource.' % variable)
+
     try:
         fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
-        #  variable = get_variable(resouces[0])
-        df = pd.DataFrame()
 
-        LOGGER.info('variable %s found in resources.' % variable)
-        datasets = sort_by_filename(resouces, historical_concatination=True)
+        dic = sort_by_filename(resource, historical_concatination=False)
 
-        for key in datasets.keys():
+        # Create index out of existing timestemps
+        for i, key in enumerate(dic.keys()):
+            for nc in dic[key]:
+                ds = Dataset(nc)
+                ts = get_time(nc)
+                if i == 0:
+                    dates = pd.DatetimeIndex(ts)
+                else:
+                    dates = dates.union(ts)
+
+        # create empty DataFrame according existing timestemps
+        df = pd.DataFrame(index=dates)
+
+        for key in dic.keys():
             try:
-                data = fieldmean(datasets[key])  # get_values(f)
-                ts = get_time(datasets[key])
-                ds = pd.Series(data=data, index=ts, name=key)
-                # ds_yr = ds.resample('12M', ).mean()   # yearly mean loffset='6M'
-                df[key] = ds
-
+                for nc in dic[key]:
+                    ds = Dataset(nc)
+                    var = get_variable(nc)
+                    ts = get_time(nc)
+                    tg_val = np.squeeze(ds.variables[var][:])
+                    d2 = np.nanmean(tg_val, axis=1)
+                    data = np.nanmean(d2, axis=1)
+                    ds_pd = pd.Series(data=data, index=ts, name=key)
+                    # ds_yr = ds.resample('12M', ).mean()   # yearly mean loffset='6M'
+                df[key] = ds_pd
+                # data = fieldmean(dic[key])  # get_values(f)
+                # ts = get_time(dic[key])
+                # ds = pd.Series(data=data, index=ts, name=key)
+                # # ds_yr = ds.resample('12M', ).mean()   # yearly mean loffset='6M'
+                # df[key] = ds
+                LOGGER.info('read in pandas series timeseries for: {}'.format(key))
             except Exception:
                 LOGGER.exception('failed to calculate timeseries for %s ' % (key))
 
-        frq = get_frequency(resouces[0])
+        frq = get_frequency(resource[0])
 
         if window is None:
-            if frq == 'day':
-                window = 10951
-            elif frq == 'man':
-                window = 359
-            elif frq == 'sem':
-                window = 119
-            elif frq == 'yr':
-                window = 30
-            else:
-                LOGGER.debug('frequency %s is not included' % frq)
-                window = 30
+            # if frq == 'day':
+            #     window = 1095  # 1
+            # elif frq == 'man':
+            #     window = 35  # 9
+            # elif frq == 'sem':
+            #     window = 11  # 9
+            # elif frq == 'yr':
+            #     window = 3  # 0
+            # else:
+            #     LOGGER.debug('frequency %s is not included' % frq)
+            window = 10
+
+        print('frequency: {}, window: {}'.format(frq, window))
 
         if len(df.index.values) >= window * 2:
             # TODO: calculate windowsize according to timestapms (day,mon,yr ... with get_frequency)
             df_smooth = df.rolling(window=window, center=True).mean()
             LOGGER.info('rolling mean calculated for all input data')
         else:
-            df_smooth = df
+            df_smooth = df.copy()
             LOGGER.debug('timeseries too short for moving mean')
             fig.text(0.95, 0.05, '!!! timeseries too short for moving mean over 30years !!!',
                      fontsize=20, color='red',
                      ha='right', va='bottom', alpha=0.5)
 
         try:
-            rmean = df_smooth.quantile([0.5], axis=1,)
-            # df_smooth.median(axis=1)
+            rmean = np.squeeze(df_smooth.quantile([0.5], axis=1,).values)
             # skipna=False  quantile([0.5], axis=1, numeric_only=False )
-            q05 = df_smooth.quantile([0.10], axis=1,)  # numeric_only=False)
-            q33 = df_smooth.quantile([0.33], axis=1,)  # numeric_only=False)
-            q66 = df_smooth.quantile([0.66], axis=1, )  # numeric_only=False)
-            q95 = df_smooth.quantile([0.90], axis=1, )  # numeric_only=False)
+            q05 = np.squeeze(df_smooth.quantile([0.10], axis=1,).values)  # numeric_only=False)
+            q33 = np.squeeze(df_smooth.quantile([0.33], axis=1,).values)  # numeric_only=False)
+            q66 = np.squeeze(df_smooth.quantile([0.66], axis=1,).values)  # numeric_only=False)
+            q95 = np.squeeze(df_smooth.quantile([0.90], axis=1,).values)  # numeric_only=False)
             LOGGER.info('quantile calculated for all input data')
-        except Exception:
-            LOGGER.exception('failed to calculate quantiles')
+        except Exception as e:
+            LOGGER.exception('failed to calculate quantiles: {}'.format(e))
 
         try:
-            plt.fill_between(df_smooth.index.values, np.squeeze(q05.values), np.squeeze(q95.values),
-                             alpha=0.5, color='grey')
-            plt.fill_between(df_smooth.index.values, np.squeeze(q33.values), np.squeeze(q66.values),
-                             alpha=0.5, color='grey')
+            x = pd.to_datetime(df.index.values)
 
-            plt.plot(df_smooth.index.values, np.squeeze(rmean.values), c='r', lw=3)
+            plt.fill_between(x, q05, q95, alpha=0.5, color='grey')
+            plt.fill_between(x, q33, q66, alpha=0.5, color='grey')
 
-            plt.xlim(min(df.index.values), max(df.index.values))
+            plt.plot(x, rmean, c='r', lw=3)
+            # plt.xlim(min(df.index.values), max(df.index.values))
             plt.ylim(ylim)
             plt.title(title, fontsize=20)
             plt.grid()  # .grid_line_alpha=0.3
@@ -264,10 +285,10 @@ def uncertainty(resouces, variable=None, ylim=None, title=None, file_extension='
             output_png = fig2plot(fig=fig, file_extension=file_extension, dir_output=dir_output)
             plt.close()
             LOGGER.debug('timeseries uncertainty plot done for %s' % variable)
-        except Exception as err:
-            raise Exception('failed to calculate quantiles. %s' % err)
-    except Exception:
-        LOGGER.exception('uncertainty plot failed for %s.' % variable)
+        except Exception as e:
+            raise Exception('failed to calculate quantiles. {}'.format(e))
+    except Exception as e:
+        LOGGER.exception('uncertainty plot failed for {}: {}'.format(variable, e))
         _, output_png = mkstemp(dir='.', suffix='.png')
     return output_png
 
@@ -336,13 +357,13 @@ def plot_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title=
     return fig
 
 
-def plot_map(resouce, variable,
-             title=None, delta=0, cmap='RdYlBu_r',
+def plot_map(resource, variable,
+             title=None, delta=0, cmap=None,
              file_extension='png', dir_output='.'):
     """
     creates a png file containing the appropriate uncertainty plot.
 
-    :param resouce: one netCDF file containng spatial values to be plotted
+    :param resource: one netCDF file containng spatial values to be plotted
     :param variable: variable to be visualised. If None (default), variable will be detected
     :param title: string to be used as title
     :param file_extension: file extinction for the graphic
@@ -352,10 +373,13 @@ def plot_map(resouce, variable,
     """
 
     try:
-        LOGGER.debug('plot_map function read in values for {}'.format(resouce))
+        LOGGER.debug('plot_map function read in values for {}'.format(resource))
 
         # get values of netcdf file
-        ds = Dataset(resouce)
+        ds = Dataset(resource)
+
+        if variable is None:
+            variable = get_variable(resource)
 
         lat = ds.variables['rlat']
         lon = ds.variables['rlon']
@@ -394,6 +418,12 @@ def plot_map(resouce, variable,
 
         plt.title(title, fontsize=20)
 
+        if cmap is None:
+            if variable in ['pr','prAdjust','prcptot','rx1day','wetdays','cdd','cwd','sdii','max_n_day_precipitation_amount']:
+                cmap = 'Blues'
+            if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
+                cmap = 'seismic'
+
         cs = plt.pcolormesh(lons, lats, var_mean,
                             transform=ccrs.PlateCarree(), cmap=cmap,
                             # vmin=20, vmax=30,
@@ -412,7 +442,7 @@ def plot_map(resouce, variable,
 
 
 def plot_map_ccsignal(signal, standard_deviation=None,
-                   variable=None, cmap='Reds', title=None,
+                   variable=None, cmap=None, title=None,
                    file_extension='png'):  # 'seismic'
     """
     generates a graphic for the output of the ensembleRobustness process for a lat/long file.
@@ -447,7 +477,7 @@ def plot_map_ccsignal(signal, standard_deviation=None,
         lons, lats = meshgrid(lon, lat)
         ds.close()
 
-        if standard_deviation != None:
+        if standard_deviation is not None:
             ds = Dataset(standard_deviation)
             val_std = np.squeeze(ds.variables[variable][:])
             ds.close()
@@ -455,10 +485,10 @@ def plot_map_ccsignal(signal, standard_deviation=None,
             #  mask = val_signal[:]  #  [val_signal[:]<val_std[:]]
 
             mask_h = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
-            mask_h[(val_signal >= (val_std / 2))] = 1   #[:]
+            mask_h[(val_signal >= (val_std / 4.))] = 1   #[:]
 
             mask_l = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
-            mask_l[val_signal < (val_std / 2)] = 1
+            mask_l[mask_h != 1] = 1
 
 
             # cyclic_var, cyclic_lons = add_cyclic_point(var_signal, coord=lons)
@@ -466,20 +496,6 @@ def plot_map_ccsignal(signal, standard_deviation=None,
             #
             # lons = cyclic_lons
             # var_signal = cyclic_var
-
-        LOGGER.info('read in values')
-        #
-        # lats, lons = get_coordinates(signal, unrotate=True)
-        #
-        # if len(lats.shape) == 1:
-        #     cyclic_var, cyclic_lons = add_cyclic_point(var_signal, coord=lons)
-        #     mask_l, cyclic_lons = add_cyclic_point(mask_l, coord=lons)
-        #     mask_h, cyclic_lons = add_cyclic_point(mask_h, coord=lons)
-        #
-        #     lons = cyclic_lons.data
-        #     var_signal = cyclic_var
-        #
-        # LOGGER.info('lat lon loaded')
 
         LOGGER.info('prepared data for plotting')
     except Exception as e:
@@ -493,16 +509,27 @@ def plot_map_ccsignal(signal, standard_deviation=None,
         # ax = plt.axes(projection=ccrs.Robinson(central_longitude=int(mean(lons))))
 
         # minval = round(np.nanmin(var_signal))
-        maxval = round(np.nanmax(val_signal)+.5)
-        norm = MidpointNormalize(  vmax=maxval)  # midpoint=0) vmin=. vcenter=0,,
+        if cmap is None:
+            if variable in ['pr','prAdjust','prcptot','rx1day','wetdays','cdd','cwd','sdii','max_n_day_precipitation_amount']:
+                cmap = 'BrBG'
+            if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
+                cmap = 'seismic'
+        else:
+            cmap = 'viridis'
+            LOGGER.debug('variable {} not found to set the colormap'.format(variable))
 
-        cs = plt.pcolormesh(lons, lats, val_signal, transform=ccrs.PlateCarree(), cmap=cmap, vmin=0,)    #norm=norm, vmin=0, vmax=maxval
+        maxval = round(np.nanmax(val_signal)+.5)
+        minval = round(np.nanmin(val_signal))
+
+        norm = MidpointNormalize( vmin=minval, vcenter=0, vmax=maxval)  # )  vcenter=0,,
+
+        cs = plt.pcolormesh(lons, lats, val_signal, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm )    #, vmin=0, vmax=maxval
                 #  60,
         plt.colorbar(cs)
 
         if standard_deviation != None:
-            ch = plt.contourf(lons, lats, mask_h, transform=ccrs.PlateCarree(), hatches=['/', '.'], alpha=0, colors='none', cmap=None)    # colors='white'
-            # cl = plt.contourf(lons, lats, mask_l, 1, transform=ccrs.PlateCarree(), hatches=[None, '/'], alpha=0, colors='none', cmap=None)     # ,
+            ch = plt.contourf(lons, lats, mask_h, transform=ccrs.PlateCarree(), hatches=[None, '.'], alpha=0, colors='none', cmap=None)    # colors='white'
+            cl = plt.contourf(lons, lats, mask_l, 1, transform=ccrs.PlateCarree(), hatches=[None, '/'], alpha=0, colors='none', cmap=None)     # ,
 
             plt.annotate('// = low model ensemble agreement', (0, 0), (0, -10),
                          xycoords='axes fraction', textcoords='offset points', va='top')
@@ -513,7 +540,7 @@ def plot_map_ccsignal(signal, standard_deviation=None,
 
         ax.add_feature(cfeature.BORDERS, linewidth=2, linestyle='--')
         ax.add_feature(cfeature.COASTLINE, linewidth=2,) #  coastlines()
-        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=2, color='gray', alpha=0.5, linestyle='--')
         gl.xlabels_top = False
         gl.ylables_right = False
@@ -526,15 +553,9 @@ def plot_map_ccsignal(signal, standard_deviation=None,
 
         # # artists, labels = ch.legend_elements()
         # # plt.legend(artists, labels, handleheight=2)
-        # plt.clim(minval,maxval)
         #
         # ax.gridlines()
         # # ax.set_global()
-        #
-        #
-        # else:
-        #     plt.title(title)
-        # plt.colorbar(cs)
 
         graphic = fig2plot(fig=fig, file_extension=file_extension)
         plt.close()
