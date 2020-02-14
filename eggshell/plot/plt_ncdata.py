@@ -161,13 +161,16 @@ def spaghetti(resource, variable=None, title=None, file_extension='png', dir_out
     return output_png
 
 
-def uncertainty(resource, variable=None, ylim=None, title=None, file_extension='png', window=None, dir_output='.'):
+def uncertainty(resource, variable=None, ylim=None, title=None,
+                file_extension='png', delta=0, window=None, dir_output='.',
+                figsize=(10,10)):
     """
     creates a png file containing the appropriate uncertainty plot.
 
     :param resource: list of files containing the same variable
     :param variable: variable to be visualised. If None (default), variable will be detected
     :param title: string to be used as title
+    :param figsize: figure size defult=(10,10)
     :param window: windowsize of the rolling mean
 
     :returns str: path/to/file.png
@@ -176,6 +179,7 @@ def uncertainty(resource, variable=None, ylim=None, title=None, file_extension='
 
     import pandas as pd
     import numpy as np
+    from datetime import datetime as dt
     from os.path import basename
     #
     # from flyingpigeon.utils import get_time, sort_by_filename
@@ -193,9 +197,9 @@ def uncertainty(resource, variable=None, ylim=None, title=None, file_extension='
     LOGGER.info('variable %s found in resource.' % variable)
 
     try:
-        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
+        fig = plt.figure(figsize=figsize, facecolor='w', edgecolor='k')
 
-        dic = sort_by_filename(resource, historical_concatination=False)
+        dic = sort_by_filename(resource, historical_concatination=True)
 
         # Create index out of existing timestemps
         for i, key in enumerate(dic.keys()):
@@ -208,7 +212,7 @@ def uncertainty(resource, variable=None, ylim=None, title=None, file_extension='
                     dates = dates.union(ts)
 
         # create empty DataFrame according existing timestemps
-        df = pd.DataFrame(index=dates)
+        df = pd.DataFrame(columns=list(dic.keys()), index=dates)
 
         for key in dic.keys():
             try:
@@ -218,15 +222,13 @@ def uncertainty(resource, variable=None, ylim=None, title=None, file_extension='
                     ts = get_time(nc)
                     tg_val = np.squeeze(ds.variables[var][:])
                     d2 = np.nanmean(tg_val, axis=1)
-                    data = np.nanmean(d2, axis=1)
-                    ds_pd = pd.Series(data=data, index=ts, name=key)
-                    # ds_yr = ds.resample('12M', ).mean()   # yearly mean loffset='6M'
-                df[key] = ds_pd
-                # data = fieldmean(dic[key])  # get_values(f)
-                # ts = get_time(dic[key])
-                # ds = pd.Series(data=data, index=ts, name=key)
-                # # ds_yr = ds.resample('12M', ).mean()   # yearly mean loffset='6M'
-                # df[key] = ds
+                    data = np.nanmean(d2, axis=1) + delta
+                    df[key].loc[ts] = data
+                    # data = fieldmean(dic[key])  # get_values(f)
+                    # ts = get_time(dic[key])
+                    # ds = pd.Series(data=data, index=ts, name=key)
+                    # # ds_yr = ds.resample('12M', ).mean()   # yearly mean loffset='6M'
+                    # df[key] = ds
                 LOGGER.info('read in pandas series timeseries for: {}'.format(key))
             except Exception:
                 LOGGER.exception('failed to calculate timeseries for %s ' % (key))
@@ -272,13 +274,18 @@ def uncertainty(resource, variable=None, ylim=None, title=None, file_extension='
 
         try:
             x = pd.to_datetime(df.index.values)
+            x1 = x[x<=dt.strptime('2005-12-31',  "%Y-%m-%d")]
+            x2 = x[len(x1)-1:]  # -1 to catch up with the last historical value
 
             plt.fill_between(x, q05, q95, alpha=0.5, color='grey')
             plt.fill_between(x, q33, q66, alpha=0.5, color='grey')
 
-            plt.plot(x, rmean, c='r', lw=3)
+            plt.plot(x1, rmean[:len(x1)], c='blue', lw=3)
+            plt.plot(x2, rmean[len(x1)-1:], c='r', lw=3)
             # plt.xlim(min(df.index.values), max(df.index.values))
             plt.ylim(ylim)
+            plt.xticks(fontsize=16, rotation=45)
+            plt.yticks(fontsize=16, ) # rotation=90
             plt.title(title, fontsize=20)
             plt.grid()  # .grid_line_alpha=0.3
 
@@ -366,6 +373,7 @@ def plot_map(resource, variable,
     :param resource: one netCDF file containng spatial values to be plotted
     :param variable: variable to be visualised. If None (default), variable will be detected
     :param title: string to be used as title
+    :param delta: set a delta for the values e.g. -273.15 to convert kelvin to temperaure
     :param file_extension: file extinction for the graphic
     :param dir_output: output directory to store the output graphic
 

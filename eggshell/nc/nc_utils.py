@@ -332,7 +332,9 @@ def sort_by_filename(resource, historical_concatination=False):
                                 replace('rcp65', 'historical').\
                                 replace('rcp85', 'historical')
                             for n in resource:
-                                if '%s_' % key in n or '%s_' % key_hist in n:
+                                if '{}_'.format(key_hist) in n:
+                                    nc_datasets[key].append(path.abspath(n))
+                                if '{}_'.format(key) in n:
                                     nc_datasets[key].append(path.abspath(n))  # path.join(p, n))
                         else:
                             LOGGER.error('append file paths to dictionary for key %s failed' % key)
