@@ -18,7 +18,7 @@ from cartopy.util import add_cyclic_point
 
 from eggshell.nc.calculation import fieldmean
 from eggshell.nc.nc_utils import get_variable, get_frequency, get_coordinates
-from eggshell.nc.nc_utils import get_time, sort_by_filename
+from eggshell.nc.nc_utils import get_time, sort_by_filename, get_values
 from eggshell.plot.plt_utils import fig2plot
 
 from numpy import meshgrid
@@ -38,6 +38,21 @@ class MidpointNormalize(colors.Normalize):
         # simple example...
         x, y = [self.vmin, self.vcenter, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
+
+
+def add_colorbar(im, aspect=20, pad_fraction=0.5,):
+    """Add a vertical color bar to an image plot."""
+    from mpl_toolkits import axes_grid1
+
+    divider = axes_grid1.make_axes_locatable(im.axes)
+    width = axes_grid1.axes_size.AxesY(im.axes, aspect=1./aspect)
+    pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
+    current_ax = plt.gca()
+    cax = divider.append_axes("right", size=width, pad=pad)
+    plt.sca(current_ax)
+
+    return im.axes.figure.colorbar(im, cax=cax)
+
 
 
 def plot_extend(resource, file_extension='png'):
@@ -83,7 +98,7 @@ def plot_extend(resource, file_extension='png'):
     return map_graphic
 
 
-def spaghetti(resource, variable=None, title=None, file_extension='png', dir_output='.'):
+def plot_ts_spaghetti(resource, variable=None, title=None, file_extension='png', dir_output='.'):
     """
     creates a png file containing the appropriate spaghetti plot as a field mean of the values.
 
@@ -161,7 +176,7 @@ def spaghetti(resource, variable=None, title=None, file_extension='png', dir_out
     return output_png
 
 
-def uncertainty(resource, variable=None, ylim=None, title=None,
+def plot_ts_uncertainty(resource, variable=None, ylim=None, title=None,
                 file_extension='png', delta=0, window=None, dir_output='.',
                 figsize=(10,10)):
     """
@@ -300,7 +315,254 @@ def uncertainty(resource, variable=None, ylim=None, title=None,
     return output_png
 
 
-def plot_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title='Spatial analog'):
+def plot_map_timemean(resource, variable=None, time_range=None,
+             title=None, delta=0, cmap=None, vmin=None, vmax=None, figsize=(15, 15),
+             file_extension='png', dir_output='.'):
+    """
+    creates a spatial map with the mean over the timestepps.
+    If multiple files are provided, a mean over all files are condidered.
+
+    :param resource: netCDF file(s) containng spatial values to be plotted.
+    :param variable: variable to be visualised. If None (default), variable will be detected
+    :param title: string to be used as title
+    :param delta: set a delta for the values e.g. -273.15 to convert Kelvin to Celsius
+    :param figsize: figure size defult=(15,15)
+    :param vmin: colorbar minimum
+    :param vmax: colorbar maximum
+    :param file_extension: file extinction for the graphic
+    :param dir_output: output directory to store the output graphic
+
+    :returns str: path/to/file.png
+    """
+    # from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
+
+    try:
+        LOGGER.debug('plot_map function read in values for {}'.format(resource))
+
+        # get values of netcdf file
+        if type(resource) == str:
+
+            ds = Dataset(resource)
+
+            if variable is None:
+                variable = get_variable(resource)
+
+            lat = ds.variables['rlat']
+            lon = ds.variables['rlon']
+            lons, lats = meshgrid(lon, lat)
+
+            var = ds.variables[variable]
+            var_mean = np.nanmean(var, axis=0) + delta # mean over whole periode 30 Years 1981-2010 and transform to Celsius
+        else:
+            for i, f in enumerate(resource):
+                if i == 0:
+                    ds = Dataset(f)
+                    lat = ds.variables['rlat']
+                    lon = ds.variables['rlon']
+                    lons, lats = meshgrid(lon, lat)
+
+                    vals = get_values(f).data
+                else:
+                    vals = np.append(vals, get_values(f).data, axis=0)
+            var_mean = np.nanmean(vals, axis=0) + delta
+
+        # prepare plot
+        LOGGER.info('preparing matplotlib figure')
+
+        fig = plt.figure(figsize=figsize, facecolor='w', edgecolor='k')
+        ax = plt.axes(projection=ccrs.PlateCarree())
+
+        cs = plt.pcolormesh(lons, lats, var_mean,
+                            transform=ccrs.PlateCarree(), cmap=cmap,
+                            vmin=vmin, vmax=vmax,
+                            )
+        # extent=(-0,17,10.5,24)
+        # ax.set_extent(extent)
+
+        ax.add_feature(cfeature.BORDERS, linewidth=2, linestyle='--')
+        # ax.add_feature(cfeature.RIVERS)
+        # ax.stock_img()
+        # ax.gridlines(draw_labels=False)
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=2, color='gray', alpha=0.5, linestyle='--')
+
+        # gl.xlabels_top = False
+        gl.ylables_right = False
+        # gl.ylables_left = False
+        # gl.xlines = False
+        # gl.xlocator = mticker.FixedLocator([0, 2,4,6,8,10,12,14,16] )
+        # gl.xformatter = LONGITUDE_FORMATTER
+        # gl.yformatter = LATITUDE_FORMATTER
+        gl.xlabel_style = {'size': 15, 'color': 'black', 'weight': 'bold'}
+        gl.ylabel_style = {'size': 15, 'color': 'black', 'weight': 'bold'}
+
+        if cmap is None:
+            if variable in ['pr', 'prAdjust',
+                            'prcptot', 'rx1day', 'wetdays',
+                            'cdd', 'cwd', 'sdii',
+                            'max_5_day_precipitation_amount']:
+                cmap = 'Blues'
+            if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
+                cmap = 'seismic'
+
+        plt.title(title, fontsize=20)
+
+        cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
+        cbar = plt.colorbar(cs, cax=cax) # Similar to fig.colorbar(im, cax = cax)
+        cbar.ax.tick_params(labelsize=20)
+
+        # ticklabs = cbar.ax.get_yticklabels()
+        # cbar.ax.set_yticklabels(ticklabs, fontsize=15)
+        # cb = add_colorbar(cs)
+
+        LOGGER.info('Matplotlib pcolormesh plot done')
+
+        output_png = fig2plot(fig=fig, file_extension='png',
+                              dir_output=dir_output)
+        plt.close()
+        LOGGER.debug('Plot done for %s' % variable)
+    except Exception as err:
+        raise Exception('failed to calculate quantiles. %s' % err)
+
+    return output_png
+
+
+def plot_map_ccsignal(signal, robustness=None,
+                   variable=None, cmap=None, title=None,
+                   file_extension='png'):  # 'seismic'
+    """
+    generates a graphic for the output of the ensembleRobustness process for a lat/long file.
+
+    :param signal: netCDF file containing the signal difference over time
+    :param robustness: netCDF file containing 1 and 0 corresponding to signal robustness
+    :param variable: variable containing the netCDF files
+    :param cmap: default='seismic',
+    :param title: default='Model agreement of signal'
+    :returns str: path/to/file.png
+    """
+    # from flyingpigeon import utils
+
+    from numpy import mean, ma
+
+    if variable is None:
+        variable = get_variable(signal)
+
+    print('found variable in file {}'.format(variable))
+
+    try:
+        ds = Dataset(signal)
+        var_signal = ds.variables[variable]
+        val_signal = np.squeeze(ds.variables[variable])
+
+        lon_att = var_signal.dimensions[-1]
+        lat_att = var_signal.dimensions[-2]
+
+        lon = ds.variables[lon_att][:]
+        lat = ds.variables[lat_att][:]
+
+        lons, lats = meshgrid(lon, lat)
+        ds.close()
+
+        if robustness is not None:
+            ds = Dataset(robustness)
+            var_rob = get_variable(robustness)
+            val_rob = np.squeeze(ds.variables[var_rob][:])
+            ds.close()
+
+            #  mask = val_signal[:]  #  [val_signal[:]<val_std[:]]
+
+            # mask_h = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
+            # mask_h[(val_signal >= (val_std / 4.))] = 1   #[:]
+            #
+            # mask_l = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
+            # mask_l[mask_h != 1] = 1
+
+            # cyclic_var, cyclic_lons = add_cyclic_point(var_signal, coord=lons)
+            # mask, cyclic_lons = add_cyclic_point(mask, coord=lons)
+            #
+            # lons = cyclic_lons
+            # var_signal = cyclic_var
+
+        LOGGER.info('prepared data for plotting')
+    except Exception as e:
+        msg = 'failed to get data for plotting: {}'.format(e)
+        LOGGER.exception(msg)
+        raise Exception(msg)
+
+    try:
+        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
+        ax = plt.axes(projection=ccrs.PlateCarree())
+        # ax = plt.axes(projection=ccrs.Robinson(central_longitude=int(mean(lons))))
+
+        # minval = round(np.nanmin(var_signal))
+        if cmap is None:
+            if variable in ['pr', 'prAdjust',
+                            'prcptot', 'rx1day',
+                            'wetdays', 'cdd',
+                            'cwd', 'sdii',
+                            'max_5_day_precipitation_amount']:
+                cmap = 'BrBG'
+            if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
+                cmap = 'seismic'
+        else:
+            cmap = 'viridis'
+            LOGGER.debug('variable {} not found to set the colormap'.format(variable))
+
+        maxval = round(np.nanmax(val_signal)+.5)
+        minval = round(np.nanmin(val_signal))
+
+        norm = MidpointNormalize( vmin=minval, vcenter=0, vmax=maxval)  # )  vcenter=0,,
+
+        cs = plt.pcolormesh(lons, lats, val_signal, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm )    #, vmin=0, vmax=maxval
+                #  60,
+        plt.colorbar(cs)
+
+        if uncertainty != None:
+            ch = plt.contourf(lons, lats, val_rob, transform=ccrs.PlateCarree(), hatches=[None, '/', '.'], alpha=0, colors='none', cmap=None)    # colors='white'
+            # cl = plt.contourf(lons, lats, mask_l, 1, transform=ccrs.PlateCarree(), hatches=[None, '/'], alpha=0, colors='none', cmap=None)     # ,
+
+            plt.annotate('// = low model ensemble agreement', (0, 0), (0, -10),
+                         xycoords='axes fraction', textcoords='offset points', va='top')
+            plt.annotate('..  = high model ensemble agreement', (0, 0), (0, -20),
+                         xycoords='axes fraction', textcoords='offset points', va='top')
+
+        # ch = plt.contourf(lons, lats, mask, 1, transform=ccrs.PlateCarree(), colors='none', hatches=[None,'.' ])
+
+        ax.add_feature(cfeature.BORDERS, linewidth=2, linestyle='--')
+        ax.add_feature(cfeature.COASTLINE, linewidth=2,) #  coastlines()
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=2, color='gray', alpha=0.5, linestyle='--')
+        gl.xlabels_top = False
+        gl.ylables_right = False
+        gl.xlabel_style = {'size': 15, 'color': 'black'}
+        gl.ylabel_style = {'size': 15, 'color': 'black'}
+
+        if title != None:
+            plt.title(title, fontsize=20 )
+
+        plt.xticks(fontsize=16, rotation=45)
+        plt.yticks(fontsize=16, ) # rotation=90
+
+
+        # # artists, labels = ch.legend_elements()
+        # # plt.legend(artists, labels, handleheight=2)
+        #
+        # ax.gridlines()
+        # # ax.set_global()
+
+        graphic = fig2plot(fig=fig, file_extension=file_extension)
+        plt.close()
+
+        LOGGER.info('Plot created and figure saved')
+    except:
+        msg = 'failed to plot graphic'
+        LOGGER.exception(msg)
+
+    return graphic
+
+
+def plot_map_spatialanalog(ncfile, variable='dissimilarity', cmap='viridis', title='Spatial analog'):
     """Return a matplotlib Figure instance showing a map of the dissimilarity measure.
     """
     import netCDF4 as nc
@@ -362,238 +624,3 @@ def plot_spatial_analog(ncfile, variable='dissimilarity', cmap='viridis', title=
 
     LOGGER.info('Plot created and figure saved')
     return fig
-
-
-def plot_map(resource, variable,
-             title=None, delta=0, cmap=None,
-             file_extension='png', dir_output='.'):
-    """
-    creates a png file containing the appropriate uncertainty plot.
-
-    :param resource: one netCDF file containng spatial values to be plotted
-    :param variable: variable to be visualised. If None (default), variable will be detected
-    :param title: string to be used as title
-    :param delta: set a delta for the values e.g. -273.15 to convert kelvin to temperaure
-    :param file_extension: file extinction for the graphic
-    :param dir_output: output directory to store the output graphic
-
-    :returns str: path/to/file.png
-    """
-
-    try:
-        LOGGER.debug('plot_map function read in values for {}'.format(resource))
-
-        # get values of netcdf file
-        ds = Dataset(resource)
-
-        if variable is None:
-            variable = get_variable(resource)
-
-        lat = ds.variables['rlat']
-        lon = ds.variables['rlon']
-        lons, lats = meshgrid(lon, lat)
-
-        var = ds.variables[variable]
-        var_mean = np.nanmean(var, axis=0) + delta # mean over whole periode 30 Years 1981-2010 and transform to Celsius
-
-        # prepare plot
-        LOGGER.info('preparing matplotlib figure')
-        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
-        ax = plt.axes(projection=ccrs.PlateCarree())
-
-        # extent=(-0,17,10.5,24)
-        # ax.set_extent(extent)
-
-        ax.add_feature(cfeature.BORDERS, linewidth=2, linestyle='--')
-        # ax.add_feature(cfeature.RIVERS)
-        # ax.stock_img()
-        # ax.gridlines(draw_labels=False)
-        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                          linewidth=2, color='gray', alpha=0.5, linestyle='--')
-        gl.xlabels_top = False
-        gl.ylables_right = False
-        # gl.xlines = False
-        # gl.xlocator = mticker.FixedLocator([0, 2,4,6,8,10,12,14,16] )
-        # gl.xformatter = LONGITUDE_FORMATTER
-        # gl.yformatter = LATITUDE_FORMATTER
-        gl.xlabel_style = {'size': 15, 'color': 'black'}
-        gl.ylabel_style = {'size': 15, 'color': 'black'}
-        # gl.xlabel_style = {'color': 'red', 'weight': 'bold'}
-
-        # ax.xaxis.set_ticks_position('bottom')
-        # ax.yaxis.set_ticks_position('left')
-        # ax.colorbar
-
-        plt.title(title, fontsize=20)
-
-        if cmap is None:
-            if variable in ['pr','prAdjust','prcptot','rx1day','wetdays','cdd','cwd','sdii','max_n_day_precipitation_amount']:
-                cmap = 'Blues'
-            if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
-                cmap = 'seismic'
-
-        cs = plt.pcolormesh(lons, lats, var_mean,
-                            transform=ccrs.PlateCarree(), cmap=cmap,
-                            # vmin=20, vmax=30,
-                            )
-        plt.colorbar(cs)
-        LOGGER.info('Matplotlib pcolormesh plot done')
-
-        output_png = fig2plot(fig=fig, file_extension='png',
-                              dir_output=dir_output)
-        plt.close()
-        LOGGER.debug('Plot done for %s' % variable)
-    except Exception as err:
-        raise Exception('failed to calculate quantiles. %s' % err)
-
-    return output_png
-
-
-def plot_map_ccsignal(signal, standard_deviation=None,
-                   variable=None, cmap=None, title=None,
-                   file_extension='png'):  # 'seismic'
-    """
-    generates a graphic for the output of the ensembleRobustness process for a lat/long file.
-
-    :param signal: netCDF file containing the signal difference over time
-    :param standard_deviation:
-    :param variable: variable containing the netCDF files
-    :param cmap: default='seismic',
-    :param title: default='Model agreement of signal'
-    :returns str: path/to/file.png
-    """
-    # from flyingpigeon import utils
-
-    from numpy import mean, ma
-
-    if variable is None:
-        variable = get_variable(signal)
-
-    print('found variable in file {}'.format(variable))
-
-    try:
-        ds = Dataset(signal)
-        var_signal = ds.variables[variable]
-        val_signal = np.squeeze(ds.variables[variable])
-
-        lon_att = var_signal.dimensions[-1]
-        lat_att = var_signal.dimensions[-2]
-
-        lon = ds.variables[lon_att][:]
-        lat = ds.variables[lat_att][:]
-
-        lons, lats = meshgrid(lon, lat)
-        ds.close()
-
-        if standard_deviation is not None:
-            ds = Dataset(standard_deviation)
-            val_std = np.squeeze(ds.variables[variable][:])
-            ds.close()
-
-            #  mask = val_signal[:]  #  [val_signal[:]<val_std[:]]
-
-            mask_h = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
-            mask_h[(val_signal >= (val_std / 4.))] = 1   #[:]
-
-            mask_l = np.empty(list(val_signal[:].shape))    # [[val_signal[:] > val_std[:]]] = 1
-            mask_l[mask_h != 1] = 1
-
-
-            # cyclic_var, cyclic_lons = add_cyclic_point(var_signal, coord=lons)
-            # mask, cyclic_lons = add_cyclic_point(mask, coord=lons)
-            #
-            # lons = cyclic_lons
-            # var_signal = cyclic_var
-
-        LOGGER.info('prepared data for plotting')
-    except Exception as e:
-        msg = 'failed to get data for plotting: {}'.format(e)
-        LOGGER.exception(msg)
-        raise Exception(msg)
-
-    try:
-        fig = plt.figure(figsize=(20, 10), facecolor='w', edgecolor='k')
-        ax = plt.axes(projection=ccrs.PlateCarree())
-        # ax = plt.axes(projection=ccrs.Robinson(central_longitude=int(mean(lons))))
-
-        # minval = round(np.nanmin(var_signal))
-        if cmap is None:
-            if variable in ['pr','prAdjust','prcptot','rx1day','wetdays','cdd','cwd','sdii','max_n_day_precipitation_amount']:
-                cmap = 'BrBG'
-            if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
-                cmap = 'seismic'
-        else:
-            cmap = 'viridis'
-            LOGGER.debug('variable {} not found to set the colormap'.format(variable))
-
-        maxval = round(np.nanmax(val_signal)+.5)
-        minval = round(np.nanmin(val_signal))
-
-        norm = MidpointNormalize( vmin=minval, vcenter=0, vmax=maxval)  # )  vcenter=0,,
-
-        cs = plt.pcolormesh(lons, lats, val_signal, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm )    #, vmin=0, vmax=maxval
-                #  60,
-        plt.colorbar(cs)
-
-        if standard_deviation != None:
-            ch = plt.contourf(lons, lats, mask_h, transform=ccrs.PlateCarree(), hatches=[None, '.'], alpha=0, colors='none', cmap=None)    # colors='white'
-            cl = plt.contourf(lons, lats, mask_l, 1, transform=ccrs.PlateCarree(), hatches=[None, '/'], alpha=0, colors='none', cmap=None)     # ,
-
-            plt.annotate('// = low model ensemble agreement', (0, 0), (0, -10),
-                         xycoords='axes fraction', textcoords='offset points', va='top')
-            plt.annotate('..  = high model ensemble agreement', (0, 0), (0, -20),
-                         xycoords='axes fraction', textcoords='offset points', va='top')
-
-        # ch = plt.contourf(lons, lats, mask, 1, transform=ccrs.PlateCarree(), colors='none', hatches=[None,'.' ])
-
-        ax.add_feature(cfeature.BORDERS, linewidth=2, linestyle='--')
-        ax.add_feature(cfeature.COASTLINE, linewidth=2,) #  coastlines()
-        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                          linewidth=2, color='gray', alpha=0.5, linestyle='--')
-        gl.xlabels_top = False
-        gl.ylables_right = False
-        gl.xlabel_style = {'size': 15, 'color': 'black'}
-        gl.ylabel_style = {'size': 15, 'color': 'black'}
-
-        if title != None:
-            plt.title(title, fontsize=20 )
-
-
-        # # artists, labels = ch.legend_elements()
-        # # plt.legend(artists, labels, handleheight=2)
-        #
-        # ax.gridlines()
-        # # ax.set_global()
-
-        graphic = fig2plot(fig=fig, file_extension=file_extension)
-        plt.close()
-
-        LOGGER.info('Plot created and figure saved')
-    except:
-        msg = 'failed to plot graphic'
-        LOGGER.exception(msg)
-
-    return graphic
-
-
-
-
-
-            # extent=(-0,17,10.5,24)
-            # ax.set_extent(extent)
-
-
-            # ax.add_feature(cfeature.RIVERS)
-            # ax.stock_img()
-            # ax.gridlines(draw_labels=False)
-
-            # gl.xlines = False
-            # gl.xlocator = mticker.FixedLocator([0, 2,4,6,8,10,12,14,16] )
-            # gl.xformatter = LONGITUDE_FORMATTER
-            # gl.yformatter = LATITUDE_FORMATTER
-
-            # gl.xlabel_style = {'color': 'red', 'weight': 'bold'}
-
-            # ax.xaxis.set_ticks_position('bottom')
-            # ax.yaxis.set_ticks_position('left')
-            # ax.colorbar

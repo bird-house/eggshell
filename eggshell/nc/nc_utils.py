@@ -561,16 +561,17 @@ def get_time(resource):
     return ts
 
 
-def get_values(resource, variable=None):
+def get_values(resource, variable=None, time_range=None):
     """
     returns the values for a list of files of files belonging to one dataset
 
-    :param resource: list of files
+    :param resource: netCDF file
     :param variable: variable to be picked from the files (if not set, variable will be detected)
+    :param time_range: list[start,end] of datetime to define periode to get values
 
     :returs numpy.array: values
     """
-    from numpy import squeeze
+    from numpy import squeeze, where, array
     if variable is None:
         variable = get_variable(resource)
 
@@ -581,6 +582,13 @@ def get_values(resource, variable=None):
     else:
         LOGGER.exception('resource is a list containing {} files. Should be only one'.format(len(resource)))
     vals = squeeze(ds.variables[variable][:])
+
+    if time_range != None:
+        ts = array(get_time(resource))
+        id_start = where(ts >= time_range[0])[0][0]
+        id_end = where(ts <= time_range[1])[0][-1]
+        vals = vals[id_start:id_end+1,:,:]
+
     return vals
 
 
