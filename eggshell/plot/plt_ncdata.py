@@ -184,6 +184,7 @@ def plot_ts_uncertainty(resource, variable=None, ylim=None, title=None,
 
     :param resource: list of files containing the same variable
     :param variable: variable to be visualised. If None (default), variable will be detected
+    :param ylim: Y-axis limitations: tuple(min,max)
     :param title: string to be used as title
     :param figsize: figure size defult=(10,10)
     :param window: windowsize of the rolling mean
@@ -353,6 +354,7 @@ def plot_map_timemean(resource, variable=None, time_range=None,
             lons, lats = meshgrid(lon, lat)
 
             var = ds.variables[variable]
+            var = get_values(f, time_range=time_range, variable=variable).data
             var_mean = np.nanmean(var, axis=0) + delta # mean over whole periode 30 Years 1981-2010 and transform to Celsius
         else:
             for i, f in enumerate(resource):
@@ -362,9 +364,9 @@ def plot_map_timemean(resource, variable=None, time_range=None,
                     lon = ds.variables['rlon']
                     lons, lats = meshgrid(lon, lat)
 
-                    vals = get_values(f).data
+                    vals = get_values(f, time_range=time_range, variable=variable).data
                 else:
-                    vals = np.append(vals, get_values(f).data, axis=0)
+                    vals = np.append(vals, get_values(f, time_range=time_range, variable=variable).data, axis=0)
             var_mean = np.nanmean(vals, axis=0) + delta
 
         # prepare plot
@@ -387,9 +389,9 @@ def plot_map_timemean(resource, variable=None, time_range=None,
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=2, color='gray', alpha=0.5, linestyle='--')
 
-        # gl.xlabels_top = False
+        gl.xlabels_top = False
         gl.ylables_right = False
-        # gl.ylables_left = False
+        gl.ylables_left = False
         # gl.xlines = False
         # gl.xlocator = mticker.FixedLocator([0, 2,4,6,8,10,12,14,16] )
         # gl.xformatter = LONGITUDE_FORMATTER
@@ -406,9 +408,10 @@ def plot_map_timemean(resource, variable=None, time_range=None,
             if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
                 cmap = 'seismic'
 
-        plt.title(title, fontsize=20)
+        plt.title(title, fontsize=25)
 
-        cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
+        cax = fig.add_axes([ax.get_position().x1 + 0.1, ax.get_position().y0,
+                            0.02, ax.get_position().height])
         cbar = plt.colorbar(cs, cax=cax) # Similar to fig.colorbar(im, cax = cax)
         cbar.ax.tick_params(labelsize=20)
 
@@ -430,7 +433,7 @@ def plot_map_timemean(resource, variable=None, time_range=None,
 
 def plot_map_ccsignal(signal, robustness=None,
                    variable=None, cmap=None, title=None,
-                   file_extension='png'):  # 'seismic'
+                   file_extension='png', vmin=None, vmax=None):  # 'seismic'
     """
     generates a graphic for the output of the ensembleRobustness process for a lat/long file.
 
@@ -499,26 +502,26 @@ def plot_map_ccsignal(signal, robustness=None,
         if cmap is None:
             if variable in ['pr', 'prAdjust',
                             'prcptot', 'rx1day',
-                            'wetdays', 'cdd',
+                            'wetdays', # 'cdd',
                             'cwd', 'sdii',
                             'max_5_day_precipitation_amount']:
                 cmap = 'BrBG'
             if variable in ['tas', 'tasAdjust', 'tg', 'tg_mean']:
                 cmap = 'seismic'
-        else:
-            cmap = 'viridis'
-            LOGGER.debug('variable {} not found to set the colormap'.format(variable))
+            else:
+                cmap = 'viridis'
+                LOGGER.debug('variable {} not found to set the colormap'.format(variable))
 
         maxval = round(np.nanmax(val_signal)+.5)
         minval = round(np.nanmin(val_signal))
 
         norm = MidpointNormalize( vmin=minval, vcenter=0, vmax=maxval)  # )  vcenter=0,,
 
-        cs = plt.pcolormesh(lons, lats, val_signal, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm )    #, vmin=0, vmax=maxval
+        cs = plt.pcolormesh(lons, lats, val_signal, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm, vmin=vmin, vmax=vmax)
                 #  60,
         plt.colorbar(cs)
 
-        if uncertainty != None:
+        if robustness != None:
             ch = plt.contourf(lons, lats, val_rob, transform=ccrs.PlateCarree(), hatches=[None, '/', '.'], alpha=0, colors='none', cmap=None)    # colors='white'
             # cl = plt.contourf(lons, lats, mask_l, 1, transform=ccrs.PlateCarree(), hatches=[None, '/'], alpha=0, colors='none', cmap=None)     # ,
 
