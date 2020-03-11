@@ -289,7 +289,7 @@ def sort_by_filename(resource, historical_concatination=False):
                 # collect the different experiment names
                 for nc in resource:
                     # LOGGER.info('file: %s' % nc)
-                    p, f = path.split(path.abspath(nc))
+                    p, f = path.split(path.abspath(nc.replace('.nc', '')))
                     n = f.split('_')
                     if len([int(i) for i in n[-1].split('-') if i.isdigit()]) == 2:
                         bn = '_'.join(n[0:-1])  # skipping the date information in the filename
