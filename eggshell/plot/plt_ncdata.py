@@ -98,20 +98,25 @@ def plot_extend(resource, file_extension='png'):
     return map_graphic
 
 
-def plot_ts_spaghetti(resource, variable=None, title=None, file_extension='png', dir_output='.'):
+def plot_ts_spaghetti(resource, variable=None, ylim=None, title=None,
+                      file_extension='png', delta=0, dir_output='.',
+                      figsize=(10, 10)):
     """
-    creates a png file containing the appropriate spaghetti plot as a field mean of the values.
+    creates a png file containing the appropriate spaghetti plot as a
+    field mean of the values.
 
     :param resource: list of files containing the same variable
     :param variable: variable to be visualised. If None (default), variable will be detected
     :param title: string to be used as title
+    :param ylim: Y-axis limitations: tuple(min,max)
+    :param figsize: figure size defult=(10,10)
 
     :retruns str: path to png file
     """
     # from eggshell.nc.calculation import fieldmean
 
     try:
-        fig = plt.figure(figsize=(20, 10), dpi=600, facecolor='w', edgecolor='k')
+        fig = plt.figure(figsize=figsize, dpi=600, facecolor='w', edgecolor='k')
         LOGGER.debug('Start visualisation spaghetti plot')
 
         # === prepare invironment
@@ -119,8 +124,6 @@ def plot_ts_spaghetti(resource, variable=None, title=None, file_extension='png',
             resource = [resource]
         if variable is None:
             variable = get_variable(resource[0])
-        if title is None:
-            title = "Field mean of %s " % variable
 
         LOGGER.info('plot values preparation done')
     except Exception as ex:
@@ -164,6 +167,9 @@ def plot_ts_spaghetti(resource, variable=None, title=None, file_extension='png',
                 LOGGER.exception(msg)
 
         plt.title(title, fontsize=20)
+        plt.ylim(ylim)
+        plt.xticks(fontsize=16, rotation=45)
+        plt.yticks(fontsize=16, ) # rotation=90
         plt.grid()
 
         output_png = fig2plot(fig=fig, file_extension=file_extension, dir_output=dir_output)
